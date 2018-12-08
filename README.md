@@ -1,0 +1,1 @@
+https://arel.eisti.fr/documents/61060/download/Mastermind.pdf
