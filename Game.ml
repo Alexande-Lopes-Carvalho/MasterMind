@@ -3,58 +3,127 @@ module Game :
   sig
 
     (*val mastermind : string -> int -> int -> bool -> unit*)
-    
-    val printGameState : string -> unit
+
+    val printRoundState : string -> unit
+
+    val newLineGameState : Code.t -> (int * int) option -> string (**)
 
     val upString : string
+
+    val roundPlayerGuessIA : string -> string -> int -> bool
+    (*val roundPlayerGuessPlayer : string -> string -> int -> bool*)
     (*val round_PlayerGuess : unit -> unit*)
     (*val round_IAGuess : unit -> unit*)
   end =
   struct
-    let upString = 
-      let rec build x s motif = 
+
+    let upString =
+      let rec build x s motif =
         if x > 0 then build (x-1) (s^motif) motif
-        else s in build (Code.nombre_pions) "" "_"
+        else s in "Token Possible : " ^ (List.fold_left (fun acc c -> acc ^ (if (String.length acc = 0)then "" else " | ") ^ (Code.string_of_pion c)
+                                                        ) "" Code.couleurs_possibles) ^ "\n" ^ (build (Code.nombre_pions) "" "_")
     ;;
 
-    let printGameState l =
-      print_endline (upString ^ l);
+    let printRoundState l =
+      Sys.command "clear";
+      print_endline l;
     ;;
 
-    let newLineGameState code rep = 
+    let newLineGameState code rep =
       "\n" ^ (Code.string_of_code (code)) ^ " " ^ (Code.string_of_reponse (rep))
     ;;
 
-    let rec refresh chooseCode gameStateln tryLeft codeSearched = (* chooseCode : procedure qui cherchera le code *) (* gameState : string *) (* tryLeft : essai restant*) (* codeSearched : le code recherché *)
-      printGameState gameStateln;
-      match chooseCode () with 
-      | None -> refresh chooseCode gameStateln tryLeft codeSearched (* Invalid code *)
-      | Some(x) -> let output = (* a changer par fct car pvp*)Code.reponse x codeSearched in 
-          match output with
-          | None -> refresh chooseCode gameStateln tryLeft codeSearched (* Invalid code *)
-          | Some(c) -> if fst c = Code.nombre_pions && Code.compare x codeSearched = 0 then true
-                       else if tryLeft = 1 then false 
-                       else refresh chooseCode (gameStateln ^ (newLineGameState x output)) (tryLeft-1) codeSearched
+    let userfiltrage x l = (* l'utilisateur na pas besoin de filtrage il retourne donc la list*)
+      l
+    ;;
+
+    let rec userChooseCode () =
+      Sys.command "clear";
+      print_endline "Choose the secret code : ";
+      match Code.code_of_string (read_line ()) with
+      | None -> userChooseCode ()
+      | Some(x) -> x
+    ;;
+
+    let userChooseCode_Round listEssaiPropose listEssaiPossible =
+      Code.code_of_string (read_line ())
+    ;;
+
+    let outputIAFun = Code.reponse;;
+
+    (*let IAChooseCodeMakeFun x = let IAChooseCode listEssaiPropose listEssaiPossible = IA.choix x listEssaiPropose listEssaiPossible;;*)
+
+    (*let returnRound =;;*)
+
+    (* chooseCode : function qui cherchera le code *)
+    (* roundState : string *)
+    (* tryLeft : essai restant*)
+    (* codeSearched : le code recherché *)
+    (* outputFun : function qui donnera la reponse du code vis a vis du code recherché *)
+    (* filtrage  : (Code.t * (int * int) option) -> Code.t list -> Code.t list *)
+    (* listEssaiPropose : ... *)
+    (* listEssaiPossible : ...*)
+
+    let rec refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible =
+    printRoundState roundStateln;
+    match chooseCode listEssaiPropose listEssaiPossible with
+    | None -> refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible(* Invalid code *)
+    | Some(x) -> let output = outputFun x codeSearched(* a changer par fct car pvp Code.reponse x codeSearched*) in
+        match output with
+        | None -> refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible(* Invalid code *)
+        | Some(c) -> if fst c = Code.nombre_pions && Code.compare x codeSearched = 0 then (true, (roundStateln ^ (newLineGameState x output)))
+                     else if tryLeft = 1 then (false, (roundStateln ^ (newLineGameState x output)))
+                     else refreshRound chooseCode (roundStateln ^ (newLineGameState x output)) (tryLeft-1) codeSearched outputFun filtrage (listEssaiPropose@[x]) (filtrage (x, output) listEssaiPossible)
+    ;;
+
+    let printEndRound result playerA playerB code =
+      printRoundState (snd result);
+      print_endline ("The code was " ^ (Code.string_of_code code));
+      print_endline ((if (fst result) then playerA else playerB) ^ " won the round ");
+    ;;
+
+    let roundPlayerGuessIA playerA playerB nbTentative =
+      let code = List.nth (Code.tous) (Random.int (List.length Code.tous)) in
+      let result = refreshRound userChooseCode_Round upString nbTentative code outputIAFun userfiltrage [] Code.tous in
+      printEndRound result playerA playerB code; (fst result)
     ;;
 
     (*
-    let gamePlayerGuessIA = 
-      let code = List.nth (Code.tous) (Random.int (List.length Code.tous)) in code
-
+    let roundIAGuessPlayer playerA playerB nbTentative =
     ;;*)
-    
+
     (*
-    let gameIAGuessPlayer = 
-      
+    let roundPlayerGuessPlayer playerA playerB nbTentative =
     ;;*)
 
-    (*let mastermind name maxtry nbround assist = (* assist = true : reponse calculé par IA | assist = false*)
+    (*
+    let rec makeGame_rec playerA playerB nbRound =
+
+    ;;*)
+
+    (*
+    let gamePlayerGuessIA =
+
+    ;;*)
+
+    (*
+    let gameIAGuessPlayer =
+
+    ;;*)
+
+    (*
+    let mastermind name maxtry nbround assist = (* assist = true : reponse calculé par IA | assist = false*)
 
     ;;*)
 end;;
 
+(*Game.roundPlayerGuessPlayer "you" "me" 10;;*)
+
+Game.roundPlayerGuessIA "you" "IA" 10;;
+
+(*
 Game.round_PlayerGuess ();;
-Game.printGameState ["abcd //.."; "aaaa /..."];;
+Game.printGameState ["abcd //.."; "aaaa /..."];;*)
       (*
     let round_PlayerGuess () =
       let codeToGuess = ref (List.nth Code.tous (Random.int (List.length Code.tous))) in
@@ -67,3 +136,14 @@ Game.printGameState ["abcd //.."; "aaaa /..."];;
           isFinished := false;
       done
       print_endline (Code.string_of_code );;*)
+
+(*
+match chooseCode listEssaiPropose listEssaiPossible with
+| None -> refresh chooseCode roundStateln tryLeft codeSearched outputFun listEssaiPropose listEssaiPossible(* Invalid code *)
+| Some(x) -> let output = outputFun x codeSearched(* a changer par fct car pvp Code.reponse x codeSearched*) in
+    match output with
+    | None -> refresh chooseCode roundStateln tryLeft codeSearched outputFun listEssaiPropose listEssaiPossible(* Invalid code *)
+    | Some(c) -> if fst c = Code.nombre_pions && Code.compare x codeSearched = 0 then (true, (roundStateln ^ (newLineGameState x output)))
+                 else if tryLeft = 1 then (false, (roundStateln ^ (newLineGameState x output)))
+                 else refresh chooseCode (roundStateln ^ (newLineGameState x output)) (tryLeft-1) codeSearched outputFun listEssaiPropose listEssaiPossible
+*)
