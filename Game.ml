@@ -1,4 +1,5 @@
 #use "Code.ml";;
+#use "IA.ml";;
 module Game :
   sig
 
@@ -11,6 +12,7 @@ module Game :
     val upString : string
 
     val roundPlayerGuessIA : string -> string -> int -> bool
+    val roundIAGuessPlayer : int -> string -> string -> int -> bool
     (*val roundPlayerGuessPlayer : string -> string -> int -> bool*)
     (*val round_PlayerGuess : unit -> unit*)
     (*val round_IAGuess : unit -> unit*)
@@ -21,7 +23,7 @@ module Game :
       let rec build x s motif =
         if x > 0 then build (x-1) (s^motif) motif
         else s in "Token Possible : " ^ (List.fold_left (fun acc c -> acc ^ (if (String.length acc = 0)then "" else " | ") ^ (Code.string_of_pion c)
-                                                        ) "" Code.couleurs_possibles) ^ "\n" ^ (build (Code.nombre_pions) "" "_")
+                                                        ) "" Code.couleurs_possibles) ^ "\nWell Placed : " ^ Code.wellplacedMotif ^ "\nMisplaced   : " ^ Code.misplacedMotif ^ "\n" ^ (build (Code.nombre_pions) "" "_")
     ;;
 
     let printRoundState l =
@@ -51,9 +53,9 @@ module Game :
 
     let outputIAFun = Code.reponse;;
 
-    (*let IAChooseCodeMakeFun x = let IAChooseCode listEssaiPropose listEssaiPossible = IA.choix x listEssaiPropose listEssaiPossible;;*)
+    let iaChooseCodeMakeFun x = IA.choix x;;
 
-    (*let returnRound =;;*)
+    let returnRound roundStateln x =printRoundState roundStateln; x;;
 
     (* chooseCode : function qui cherchera le code *)
     (* roundState : string *)
@@ -67,25 +69,30 @@ module Game :
     let rec refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible =
     printRoundState roundStateln;
     match chooseCode listEssaiPropose listEssaiPossible with
-    | None -> refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible(* Invalid code *)
+    | None -> refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible(* Invalid code | si l'utilisateur se trompe on refesh l'affichage d'ou la necessité de la rep de type option *)
     | Some(x) -> let output = outputFun x codeSearched(* a changer par fct car pvp Code.reponse x codeSearched*) in
         match output with
         | None -> refreshRound chooseCode roundStateln tryLeft codeSearched outputFun filtrage listEssaiPropose listEssaiPossible(* Invalid code *)
-        | Some(c) -> if fst c = Code.nombre_pions && Code.compare x codeSearched = 0 then (true, (roundStateln ^ (newLineGameState x output)))
-                     else if tryLeft = 1 then (false, (roundStateln ^ (newLineGameState x output)))
+        | Some(c) -> if fst c = Code.nombre_pions && Code.compare x codeSearched = 0 then returnRound (roundStateln ^ (newLineGameState x output)) true
+                     else if tryLeft = 1 then returnRound (roundStateln ^ (newLineGameState x output)) false
                      else refreshRound chooseCode (roundStateln ^ (newLineGameState x output)) (tryLeft-1) codeSearched outputFun filtrage (listEssaiPropose@[x]) (filtrage (x, output) listEssaiPossible)
     ;;
 
     let printEndRound result playerA playerB code =
-      printRoundState (snd result);
       print_endline ("The code was " ^ (Code.string_of_code code));
-      print_endline ((if (fst result) then playerA else playerB) ^ " won the round ");
+      print_endline ((if (result) then playerA else playerB) ^ " won the round ");
     ;;
 
     let roundPlayerGuessIA playerA playerB nbTentative =
       let code = List.nth (Code.tous) (Random.int (List.length Code.tous)) in
       let result = refreshRound userChooseCode_Round upString nbTentative code outputIAFun userfiltrage [] Code.tous in
-      printEndRound result playerA playerB code; (fst result)
+      printEndRound result playerA playerB code; result
+    ;;
+
+    let roundIAGuessPlayer chIA playerA playerB nbTentative =
+      let code = userChooseCode () in 
+      let result = refreshRound (fun a b -> Some(IA.choix chIA a b)) upString nbTentative code outputIAFun (IA.filtre chIA) [] Code.tous in
+      printEndRound result playerA playerB code; result
     ;;
 
     (*
@@ -118,7 +125,7 @@ module Game :
 end;;
 
 (*Game.roundPlayerGuessPlayer "you" "me" 10;;*)
-
+Game.roundIAGuessPlayer 0 "IA" "you" 100;;
 Game.roundPlayerGuessIA "you" "IA" 10;;
 
 (*
