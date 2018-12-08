@@ -125,7 +125,7 @@ module Game :
 end;;
 
 (*Game.roundPlayerGuessPlayer "you" "me" 10;;*)
-Game.roundIAGuessPlayer 0 "IA" "you" 100;;
+Game.roundIAGuessPlayer 1 "IA" "you" 100;;
 Game.roundPlayerGuessIA "you" "IA" 10;;
 
 (*
