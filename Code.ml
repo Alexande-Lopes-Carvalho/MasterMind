@@ -7,6 +7,12 @@ module Code :
     type t = pion list
     (** Nombre de pions par code *)
     val nombre_pions : int
+    (* motif pour affichage console de pion bien placé *)
+
+    val reponseBonneMotif  : string
+    (* motif pour affichage console de pion mal placé *)
+
+    val reponseMauvaiseMotif : string
     (** Liste des couleurs possibles *)
 
     val couleurs_possibles : pion list
@@ -36,6 +42,14 @@ module Code :
 
     val code_of_string : string -> t option
 
+    (** Conversion de reponse vers string pour affichage
+      * @param reponse
+      * @return sa representation en chaine de caractere
+      *)
+
+    val string_of_reponse : (int * int) option -> string
+
+    (* a supp pour debug *)
     val makeCode : string -> t
 
     (** La liste de tous les codes permis *)
@@ -63,13 +77,8 @@ module Code :
       let pionToken = ['a'; 'b'; 'c'; 'd'; 'e'; 'f'; 'g'; 'h'; 'i'; 'j'; 'k'; 'l'; 'm'; 'n'];;
       let pionColor = ["[0;31m"; "[0;32m"; "[0;33m"; "[0;34m"; "[0;35m"; "[0;36m"; "[0;37m"; "[1;31m"; "[1;32m"; "[1;33m"; "[1;34m"; "[1;35m"; "[1;36m"; "[1;37m"];;
       let defaultColor = "[0m";;
-
-      let rec makecolorListrec x l r =
-        if x = 0 then r else
-        match l with
-          | [] -> print_endline "Not Enough Color";r (* cas impossible a cause du min max lors de l'appel de la fonction*)
-          | c::k -> makecolorListrec (x-1) k (r@[c])
-      ;;
+      let reponseBonneMotif = "/";;
+      let reponseMauvaiseMotif = ".";;
 
       let rec makeArray n l =
         if n > 0 then makeArray (n-1) ((Color(n-1))::l)
@@ -81,8 +90,9 @@ module Code :
       ;;
 
       let makecolorList x = makeArray (min (max x 0) (List.length pionColor));;
+      let makeNbPions x = max x 1;; 
 
-      let nombre_pions = 4;;
+      let nombre_pions = makeNbPions 4;;
       let couleurs_possibles = makecolorList 6;;
 
       let rec compare a b = match (a, b)with
@@ -137,6 +147,17 @@ module Code :
         else None
       ;;
 
+      let rec build x s motif = 
+        if x > 0 then build (x-1) (s^motif) motif
+        else s
+      ;;
+
+      let string_of_reponse x = 
+        match x with 
+        | None -> ""
+        | Some(y) -> (build (fst(y)) "" reponseBonneMotif) ^ (build (snd(y)) "" reponseMauvaiseMotif)
+      ;;
+
       let makeCode s = (* Pour Debug*)
         List.fold_left (fun acc c -> match (find c pionToken) with
                                       | Some(x) -> acc @ [Color(x)]
@@ -157,21 +178,54 @@ module Code :
           else
             (x, nombre_pions-x)::l
         in rep nombre_pions []
-        ;;
       ;;
 
+      (*REMOVE DOWN printList
+      let printList l =
+        print_endline ((List.fold_left (fun acc c -> acc ^ (string_of_int c) ^ " ") " [" l) ^ "] ");
+      ;;*)
 
       let reponse a b =
-        if (List.length a = List.length b) then
-          let o = let rec makeRep a b i =
-            match (a , b) with
-            | ([], []) -> i
-            | (x::l, y::k) -> makeRep l k ((if x = y then 1 else 0) + i)
-            in makeRep a b 0 in
-          Some((o, nombre_pions-o))
+        if List.length a = List.length b then
+           let rec findExceptIndex c l li i = 
+            match l with 
+            | [] -> None 
+            | x::k -> if x = c && (List.fold_left (fun acc c -> c<>i &&acc) true li) then Some(i) else findExceptIndex c k li (i+1)
+           in
+           let value = List.length (List.fold_left (fun acc c -> (*printList acc;*)match findExceptIndex c b acc 0 with 
+                                                                  | None -> acc
+                                                                  | Some(x) -> x::acc) [] a) in
+          Some(value, nombre_pions-value)
         else None
       ;;
+
 end ;;
+
+
+let optionString a = 
+  match a with
+  | None -> ""
+  | Some(x) -> "(" ^ (string_of_int (fst x)) ^ ", " ^ (string_of_int (snd x)) ^ ") " ^ (Code.string_of_reponse a)
+;;
+
+print_endline (optionString (Code.reponse (Code.makeCode "abcd") (Code.makeCode "ahhh")));;
+print_endline (optionString (Code.reponse (Code.makeCode "abcd") (Code.makeCode "abhh")));;
+print_endline (optionString (Code.reponse (Code.makeCode "abcd") (Code.makeCode "abch")));;
+print_endline (optionString (Code.reponse (Code.makeCode "abcd") (Code.makeCode "abcd")));;
+print_endline (optionString (Code.reponse (Code.makeCode "hhah") (Code.makeCode "hhah")));;
+print_endline (optionString (Code.reponse (Code.makeCode "hhah") (Code.makeCode "chha")));;
+(*
+let reponse a b =
+    if (List.length a = List.length b) then
+    let o = let rec makeRep a b i =
+      match (a , b) with
+      | ([], []) -> i
+      | (x::l, y::k) -> makeRep l k ((if x = y then 1 else 0) + i)
+      in makeRep a b 0 in
+    Some((o, nombre_pions-o))
+  else None
+;;
+*)
 
 (*
 match (find c pionToken) with
