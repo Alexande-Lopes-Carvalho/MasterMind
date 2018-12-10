@@ -56,6 +56,10 @@ module Code :
 
     val string_of_reponse : (int * int) option -> string
 
+    (**  pour que le joueur fournisse une reponse au code donné par son adversaire
+      *)
+    val reponse_of_string : string -> (int * int) option
+
     (* a supp pour debug *)
     val makeCode : string -> t
 
@@ -105,9 +109,9 @@ module Code :
       let nombre_pions = makeNbPions 4;;
       let couleurs_possibles = makecolorList 6;;
 
-      let extractColor a = match a with | Color(x) -> x;; 
+      let extractColor a = match a with | Color(x) -> x;;
 
-      let rec compare a b = 
+      let rec compare a b =
         fst (List.fold_left (fun acc c -> let i = snd acc in
                                      ( fst acc + (( (extractColor c) - (extractColor (List.nth b i)) ) * (int_of_float ( float_of_int(List.length couleurs_possibles) ** float_of_int (nombre_pions-1-i))) ) , i+1)
                         ) (0, 0) a)
@@ -121,7 +125,7 @@ module Code :
       ;;
 
       let string_of_code t =
-          (List.fold_left (fun acc c -> let v = extractColor c in 
+          (List.fold_left (fun acc c -> let v = extractColor c in
                                         acc ^ (fill (List.nth pionColor v)) ^ (String.make 1 (List.nth pionToken v))
                            ) "" t
                           ) ^ (fill defaultColor)
@@ -142,11 +146,11 @@ module Code :
                                      ) (-1, 0) l);;
 
       let code_of_string s =
-          if (String.length s = nombre_pions) then 
-            List.fold_left (fun acc c -> match acc with 
+          if (String.length s = nombre_pions) then
+            List.fold_left (fun acc c -> match acc with
                                           | Some(x) -> let res = find pionToken c in
                                                        if res <> -1 && res < (List.length couleurs_possibles) then Some(x@[Color(res)]) else None
-                                          | None -> None 
+                                          | None -> None
                             ) (Some([])) (charlist_of_string s)
           else None
         ;;
@@ -162,13 +166,25 @@ module Code :
         | Some(y) -> (build (fst(y)) "" wellplacedMotif) ^ (build (snd(y)) "" misplacedMotif)
       ;;
 
+      let reponse_of_string x = (*on pourrait compara a la liste de reponse mais sinon l'algo est moin flexible *)
+        let s = charlist_of_string x in
+        if List.length s > nombre_pions then None
+        else
+        (List.fold_left (fun acc c -> (*print_endline (String.make 1 c);*)match acc with
+                                        | Some(x) -> if String.compare (String.make 1 c) (wellplacedMotif) = 0 then Some(fst x+1, snd x)
+                                                     else if String.compare (String.make 1 c) (misplacedMotif) = 0 then Some(fst x, snd x+1)
+                                                     else acc
+                                        | None -> acc
+                        ) (Some((0, 0))) s)
+      ;;
+
       let makeCode s = (* Pour Debug*)
-        match code_of_string s with 
+        match code_of_string s with
         | Some(x) -> x
         | None -> [Color(0)]
       ;;
 
-      let printListCode l = 
+      let printListCode l =
         Sys.command "clear";
         print_endline ((List.fold_left (fun acc c -> acc ^ "[" ^ (string_of_code c) ^ "] ") "[ " l) ^ "]");
       ;;
@@ -185,7 +201,7 @@ module Code :
           if n > 0 then makeArray (n-1) ((n-1)::l)
           else l
         in let o = makeArray (nombre_pions+1) [] in
-        List.fold_left (fun acc c -> acc@(List.fold_left (fun acc_ c_ -> if c+c_ <= nombre_pions && ((c = nombre_pions-1 && c_ = 0) || (c <> nombre_pions-1)) then acc_@[(c, c_)] else acc_ 
+        List.fold_left (fun acc c -> acc@(List.fold_left (fun acc_ c_ -> if c+c_ <= nombre_pions && ((c = nombre_pions-1 && c_ = 0) || (c <> nombre_pions-1)) then acc_@[(c, c_)] else acc_
                                                           ) [] o)
                         ) [] o
       ;;
@@ -194,28 +210,28 @@ module Code :
       let printList l =
         print_endline ((List.fold_left (fun acc c -> acc ^ (string_of_int c) ^ " ") " [" l) ^ "] ");
       ;;*)
-      let setList l is x = fst (List.fold_left (fun acc c -> let i = snd acc in if is = i then ((fst acc)@[x] , i+1) else ((fst acc)@[c] , i+1) ) ([], 0) l);; 
+      let setList l is x = fst (List.fold_left (fun acc c -> let i = snd acc in if is = i then ((fst acc)@[x] , i+1) else ((fst acc)@[c] , i+1) ) ([], 0) l);;
 
       let reponse a b =
         if List.length a = List.length b then
-           let checkCorrectPion = 
+           let checkCorrectPion =
             fst (List.fold_left (fun acc c -> let i = snd acc in ((fst acc)@[if List.nth b i = c then i else -1] , (snd acc) +1)) ([], 0) a)
-           in 
-           let checkPion = 
-            fst (List.fold_left (fun acc c ->  let i = (snd acc) in 
-                                          if (List.nth (fst acc) i = -1) then 
+           in
+           let checkPion =
+            fst (List.fold_left (fun acc c ->  let i = (snd acc) in
+                                          if (List.nth (fst acc) i = -1) then
                                             let res = fst (List.fold_left (fun acc_ c_ -> let i = (snd acc_) in
-                                                                                          if c_ = c && not(List.exists (fun x -> x = i) (fst acc)) then (i , i+1) 
+                                                                                          if c_ = c && not(List.exists (fun x -> x = i) (fst acc)) then (i , i+1)
                                                                                           else (fst acc_, i+1)
                                                                             ) (-1, 0) b) in
                                             if res <> -1 then (setList (fst acc) i res, i+1)
                                             else (fst acc, i+1)
                                          else (fst acc, i+1)
                             ) (checkCorrectPion, 0) a)
-           in 
-           let result = 
+           in
+           let result =
             fst (List.fold_left (fun acc c -> let i = (snd acc) in
-                                         if i = c then (( (fst (fst acc)) +1 , (snd (fst acc)) ) , i+1) 
+                                         if i = c then (( (fst (fst acc)) +1 , (snd (fst acc)) ) , i+1)
                                          else if c <> -1 then (( (fst (fst acc))  , (snd (fst acc)) +1) , i+1)
                                          else  (fst acc , i+1)
                             ) ((0, 0), 0) checkPion)
