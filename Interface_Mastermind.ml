@@ -27,41 +27,130 @@ Graphics.open_graph " 1000x1000+400";;
 
 Graphics.set_window_title " Test fenetre 1";;
 
-let gris = Graphics.rgb 191 191 191;;
-let rouge = Graphics.rgb 250 0 0;;
-let brown = Graphics.rgb 222 184 135;;
+let gris = rgb 191 191 191;;
+let rouge = rgb 250 0 0;;
+let brown = rgb 222 184 135;;
 
 set_line_width 1;;
 
 
 set_color rouge;
-Graphics.draw_rect 10 10 65 30;;
-Graphics.moveto 20 20;;
-Graphics.draw_string "Quitter";;
+draw_rect 10 10 65 30;;
+moveto 20 20;;
+draw_string "Quitter";;
 
 
 
 set_color gris;
-Graphics.draw_rect 900 10 65 30;;
-Graphics.moveto 910 20;;
+draw_rect 900 10 65 30;;
+moveto 910 20;;
 set_color black;
-Graphics.draw_string "Options";;
+draw_string "Options";;
 
 
 set_color gris;
-Graphics.draw_rect 8 8 980 980;;
+draw_rect 8 8 980 980;;
 
 set_line_width 2;;
 set_color brown;
-Graphics.draw_rect 40 45 920 940;;
+draw_rect 40 45 920 940;;
 
 
 
-Graphics.moveto 400 400;;
+moveto 400 400;;
 set_color black;;
 
-Graphics.draw_string "Test ecriture";;
+draw_string "Test ecriture";;
 
+
+(* Drawing *)
+
+set_line_width 1;; (*- largeur lignes*)
+
+let gris = rgb 50 110 200;;
+set_color Graphics.red;
+draw_rect 5 5 500 200;
+(* x y longueur largeur *)
+
+
+set_color cyan;
+draw_rect 50 100 200 200;;
+
+Graphics.rgb 190 50 100;;
+Graphics.draw_rect 100 100 200 200;;
+(* Graphics.fill_rect 0 0 90 110;;  centre x centre y largeur hauteur  *)
+
+lineto 100 160;; (*trace un trait de la position actuelle vers osition en paramètre*)
+
+draw_circle 500 500 50;;
+fill_circle 500 500 30;; (* centre x y et rayon r*)
+
+draw_circle 400 450 50;;
+fill_circle 400 450 30;;
+
+draw_ellipse 450 250 25 30  ;;(* centre x y rx ry *)
+fill_ellipse 450 250 10 15;;
+
+Graphics.draw_arc 160 160 80 110 50 360;;
+(* Graphics.draw_arc x y rx ry a b;; *)
+
+
+set_color red;;
+fill_rect 500 500 200 200;;
+
+set_color cyan;;
+fill_rect 640 600 50 50;;
+
+set_color cyan;;
+fill_rect 540 600 50 50;;
+
+set_color brown;;
+fill_rect 550 610 25 25;;
+
+set_color brown;;
+fill_rect 650 610 25 25;;
+
+set_color green;;
+fill_rect 600 500 125 20;;
+
+  size_x();;
+  size_y();;
+
+current_point();; (* position actuelle*)
+
+moveto 50 50;;
+(* Graphics.plot a b;;  - dessine 1 pt
+Graphics.lineto a b;;   - dessine 1 ligne   *)
+
+Graphics.current_point();;
+
+
+set_color black;;
+let gris = rgb 191 191 191;;
+let rouge = rgb 250 0 0;;
+let brown = rgb 222 184 135;;
+
+set_line_width 1;;
+
+
+set_color rouge;
+draw_rect 10 10 65 30;;
+moveto 20 20;;
+draw_string "Quitter";;
+
+
+
+set_color gris;
+draw_rect 900 10 65 30;;
+moveto 910 20;;
+draw_string "Options";;
+
+set_color gris;
+draw_rect 8 8 980 980;;
+
+set_line_width 2;;
+set_color brown;
+draw_rect 40 45 920 940;;
 
 
 let clicV0() =
@@ -87,6 +176,7 @@ print_string "here1" ;;
 read_key();; (* -> char *)
 
 key_pressed();; (* T / F *)
+
 
 current_x;;
 
