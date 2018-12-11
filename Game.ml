@@ -98,7 +98,7 @@ module Game :
                      else if tryLeft = 1 then returnRound (newroundStateln ^ (actRoundStateAnswer (fst(output)))) (false, correctAnswer && snd (output))
                      else refreshRound chooseCode (newroundStateln ^ (actRoundStateAnswer (fst(output)))) (tryLeft-1) codeSearched outputFun filtrage (listEssaiPropose@[x]) (filtrage (x, fst output) listEssaiPossible) (correctAnswer && snd (output))
     ;;
-    
+
     (* return true si playerA a gagné*)
     let endRound result playerA playerB code =
       print_endline ("The code was " ^ (Code.string_of_code code) ^ "\n" ^ (if not(snd result) then (playerB^" haven't answered correctly \n") else "") ^ (if (not(fst result) && (snd result)) then playerB else playerA) ^ " won the round \npress Enter to continue ...");
@@ -135,42 +135,42 @@ module Game :
       Sys.command "clear";
       print_endline message;
       let k = read_int () in
-      if k >= a && k <= b then k else askIntBorne message a b 
+      if k >= a && k <= b then k else askIntBorne message a b
     ;;
 
     let rec askIntSup message a =
       Sys.command "clear";
       print_endline message;
       let k = read_int () in
-      if k >= a then k else askIntSup message a 
+      if k >= a then k else askIntSup message a
     ;;
 
     let rec askString message l =
       print_endline message;
-      let res = read_line () in 
+      let res = read_line () in
       let i = fst (List.fold_left (fun acc c -> let i = snd acc in
                                            if String.compare res c = 0 then (i, i+1)
                                            else (fst acc, i+1)
                                    ) (-1, 0) l) in
       if i = -1 then askString message l
       else i
-    ;; 
+    ;;
 
-    let askPlayerInfo message = 
+    let askPlayerInfo message =
       print_endline (message ^ " Please write your name");
       let name = read_line () in
       (name, askString (name ^ " do you want an IA assist ?\nyes / no") ["yes"; "no"]) (* pour que l'IA calculer les reponse ou que ce soit lui qui reponde*)
     ;;
 
-    let endGame res playerA playerB = 
+    let endGame res playerA playerB =
       Sys.command "clear";
-      print_endline ( (if (fst res <> snd res) then ((if (fst res > snd res) then playerA else playerB) ^ " won the game") else "Equality") ^ "\n" ^ playerA ^ " won " ^ (string_of_int (fst res)) ^ " round \n" ^ playerB ^ " won " ^ (string_of_int(snd res)) ^ " round\npress Enter to continue ...");
-    ;; 
+      print_endline ( (if (fst res <> snd res) then ((if (fst res > snd res) then playerA else playerB) ^ " won the game") else "Equality") ^ "\n" ^ playerA ^ " won " ^ (string_of_int (fst res)) ^ " round \n" ^ playerB ^ " won " ^ (string_of_int(snd res)) ^ " round");
+    ;;
 
-    (* funA return true si PlayerA won 
+    (* funA return true si PlayerA won
        funB return true si PlayerB won*)
-    let rec game funA funB nbTentative latch roundLeft result = 
-      if roundLeft = 0 then result 
+    let rec game funA funB nbTentative latch roundLeft result =
+      if roundLeft = 0 then result
       else if latch then let res = funA nbTentative in game funA funB nbTentative (not latch) (roundLeft-1) (fst result + (if res then 1 else 0), snd result + (if res then 0 else 1))
       else let res = funB nbTentative in game funA funB nbTentative (not latch) (roundLeft-1) (fst result + (if res then 0 else 1), snd result + (if res then 1 else 0))
     ;;
@@ -180,17 +180,17 @@ module Game :
       let nbGame = let v = askIntSup ("MasterMind \nHow much Game would you like ?") 1 in (v+v mod 2) in
       let nbTry = askIntSup ("MasterMind \nHow much try per Game would you like ?") 1 in
       let playerA = askPlayerInfo "Player 1" in
-      if gameMode = 0 then (* Player Vs IA *) 
+      if gameMode = 0 then (* Player Vs IA *)
         let chIA = askIntBorne ("Please choose an IA\n0 : Algo Naif\n1 : Algo Knuth") 0 1 in
         let result = game (roundPlayerGuessIA (fst playerA)) (roundIAGuessPlayer (chIA) (snd playerA) (fst playerA)) nbTry (Random.bool ()) nbGame (0, 0) in
         endGame result (fst playerA) nameIA;
-        let relaunchGame = askString ("Would you like to play another game?\nyes / no") ["yes"; "no"] in 
+        let relaunchGame = askString ("Would you like to play another game?\nyes / no") ["yes"; "no"] in
         if relaunchGame = 0 then mastermind ();
-      else if gameMode = 1 then 
-        let playerB = askPlayerInfo "Player 2" in 
+      else if gameMode = 1 then
+        let playerB = askPlayerInfo "Player 2" in
         let result = game (roundPlayerGuessPlayer (snd playerB) (fst playerA) (fst playerB)) (roundPlayerGuessPlayer (snd playerA) (fst playerB) (fst playerA)) nbTry (Random.bool ()) nbGame (0, 0) in
         endGame result (fst playerA) (fst playerB);
-        let relaunchGame = askString ("Would you like to play another game?\nyes / no") ["yes"; "no"] in 
+        let relaunchGame = askString ("Would you like to play another game?\nyes / no") ["yes"; "no"] in
         if relaunchGame = 0 then mastermind ();
     ;;
 end;;
