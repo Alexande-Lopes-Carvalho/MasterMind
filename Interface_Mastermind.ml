@@ -141,7 +141,6 @@ moveto 20 20;;
 draw_string "Quitter";;
 
 
-
 set_color gris;
 draw_rect 900 10 65 30;;
 moveto 910 20;;
@@ -172,42 +171,107 @@ let option_clic () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 900 && posx < 965 )&&( posy > 10 && posy < 40 ) then  print_string "Option_clicked" else print_string "NF2";;
 
 
-set_color black;;
-draw_rect 360 60 380 60;;
-
 
 set_color black;;
-fill_circle 400 90 20;;
-fill_circle 500 90 20;;
-fill_circle 600 90 20;;
-fill_circle 700 90 20;;
+fill_circle 350 90 20;;
+fill_circle 450 90 20;;
+fill_circle 550 90 20;;
+fill_circle 650 90 20;;
 
+set_color blue;;
+draw_circle 350 180 20;;
+draw_circle 450 180 20;;
+draw_circle 550 180 20;;
+draw_circle 650 180 20;;
+
+set_color blue;;
+draw_circle 350 270 20;;
+draw_circle 450 270 20;;
+draw_circle 550 270 20;;
+draw_circle 650 270 20;;
+
+set_color blue;;
+draw_circle 350 360 20;;
+draw_circle 450 360 20;;
+draw_circle 550 360 20;;
+draw_circle 650 360 20;;
+
+set_color blue;;
+draw_circle 350 450 20;;
+draw_circle 450 450 20;;
+draw_circle 550 450 20;;
+draw_circle 650 450 20;;
+
+set_color blue;;
+draw_circle 350 540 20;;
+draw_circle 450 540 20;;
+draw_circle 550 540 20;;
+draw_circle 650 540 20;;
+
+set_color blue;;
+draw_circle 350 630 20;;
+draw_circle 450 630 20;;
+draw_circle 550 630 20;;
+draw_circle 650 630 20;;
+
+set_color blue;;
+draw_circle 350 720 20;;
+draw_circle 450 720 20;;
+draw_circle 550 720 20;;
+draw_circle 650 720 20;;
+
+set_color blue;;
+draw_circle 350 810 20;;
+draw_circle 450 810 20;;
+draw_circle 550 810 20;;
+draw_circle 650 810 20;;
+
+set_color blue;;
+draw_circle 350 900 20;;
+draw_circle 450 900 20;;
+draw_circle 550 900 20;;
+draw_circle 650 900 20;;
 
 print_string "here 0" ;;
 
 
 (*
 let rec menu() =
-print_string "r pour rectangle \n c pour cercle plein \n v pour cercle vide \n 0 pour quitter "
+print_string "p pour une figure pleine \n v pour le contour seulement  \n 0 pour quitter "
+
 match read_key() with
-|'r'
-|'c'
-|'v'
-|'0'
+|'p' ->
+|'v' ->
+
+print_string "r pour rectangle \n c pour cercle  \n 0 pour quitter "
+match read_key() with
+|'r' ->
+|'c' ->
+
 ;;
 
 menu();;
 
 *)
+set_color green;;
+draw_rect 200 125 600 820;;
+
 
 let scan_int () = Scanf.scanf " %d" (fun x ->x);;
 
-let draw_assist () =
+let cercle () =
    let x = scan_int() in
    let y = scan_int() in
    let r = scan_int() in (fill_circle x y r) ;;
 
-draw_assist ();;
+cercle ();;
+
+let rect () =
+   let x = scan_int() in
+   let y = scan_int() in
+   let l = scan_int() in
+   let k = scan_int() in (fill_rect x y l k) ;;
+rect ();;
 
 
 
