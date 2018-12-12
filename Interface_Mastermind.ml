@@ -1,4 +1,4 @@
-
+(* http://www.france-ioi.org/algo/course.php?idChapter=551&idCourse=1811 *)
 type event = Button_down | Button_up | Key_pressed | Mouse_motion | Poll;;
 
 type status =
@@ -21,9 +21,11 @@ open Graphics;;
 
 Graphics.open_graph " 1000x1000+400";;
 (*                       l x h
- Graphics.open_graph "";; <=> taille prédef
+ Graphi
+ cs.open_graph "";; <=> taille prédef
  Graphics.close_graph();; *)
 
+let eot() = close_graph();;
 
 Graphics.set_window_title " Test fenetre 1";;
 
@@ -67,12 +69,11 @@ draw_string "Test ecriture";;
 
 set_line_width 1;; (*- largeur lignes*)
 
-let gris = rgb 50 110 200;;
-set_color Graphics.red;
-draw_rect 5 5 500 200;
+
+
 (* x y longueur largeur *)
 
-
+(*
 set_color cyan;
 draw_rect 50 100 200 200;;
 
@@ -112,7 +113,7 @@ fill_rect 650 610 25 25;;
 
 set_color green;;
 fill_rect 600 500 125 20;;
-
+*)
   size_x();;
   size_y();;
 
@@ -123,6 +124,7 @@ moveto 50 50;;
 Graphics.lineto a b;;   - dessine 1 ligne   *)
 
 Graphics.current_point();;
+
 
 
 set_color black;;
@@ -170,6 +172,44 @@ let option_clic () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 900 && posx < 965 )&&( posy > 10 && posy < 40 ) then  print_string "Option_clicked" else print_string "NF2";;
 
 
+set_color black;;
+draw_rect 360 60 380 60;;
+
+
+set_color black;;
+fill_circle 400 90 20;;
+fill_circle 500 90 20;;
+fill_circle 600 90 20;;
+fill_circle 700 90 20;;
+
+
+print_string "here 0" ;;
+
+
+(*
+let rec menu() =
+print_string "r pour rectangle \n c pour cercle plein \n v pour cercle vide \n 0 pour quitter "
+match read_key() with
+|'r'
+|'c'
+|'v'
+|'0'
+;;
+
+menu();;
+
+*)
+
+let scan_int () = Scanf.scanf " %d" (fun x ->x);;
+
+let draw_assist () =
+   let x = scan_int() in
+   let y = scan_int() in
+   let r = scan_int() in (fill_circle x y r) ;;
+
+draw_assist ();;
+
+
 
 
 print_string "here1" ;;
@@ -177,14 +217,10 @@ read_key();; (* -> char *)
 
 key_pressed();; (* T / F *)
 
-
 current_x;;
-
 
 print_string "here2" ;;
 button_down();;
-
-
 
 mouse_pos ();; (* <=> Graphics.mouse_pos();; donne x y  de la souris *)
 
@@ -198,24 +234,21 @@ snd( mouse_pos() );;
 
 clic();;
 
-
-
 quit_game();;
-
 
 clic();;
 
 print_string "here3" ;;
 
-
 clic();;
+
 clic();;
 
 print_string "clique" ;;
+
 clic();;
 
 quit_game();;
-
 
 
 (*
