@@ -1,0 +1,203 @@
+#load "graphics.cma";;
+#load "unix.cma";;
+
+module Graph :
+  sig
+    val width : int
+    val height : int
+    val frameRate : float
+    val millis : unit -> float
+
+    val wait : float -> unit
+
+    val nameWindow : string
+    val mouseX : unit -> int
+    val mouseY : unit -> int
+
+    val size : int -> int -> unit
+
+    val exit : unit -> unit
+
+    val color : int -> int -> int -> Graphics.color
+
+    val fill : Graphics.color -> unit
+
+    val rect : int -> int -> int -> int -> unit
+
+    val background : Graphics.color -> unit
+
+    val ellipse : int -> int -> int -> int -> unit
+
+    val set : int -> int -> unit
+
+    val line : int -> int -> int -> int -> unit
+
+    val strokeWeight : int -> unit
+
+    val text : string -> int -> int -> unit
+
+    val wait : float -> unit
+
+    val loadImage : string -> Graphics.image
+
+    val image : Graphics.image -> int -> int -> unit
+
+  end =
+  struct
+    let width = 500;;
+    let height = 500;;
+    let nameWindow = "MasterMind";;
+    let frameRate = 60.;; (* fps *)
+
+    let startMillisCount = Unix.gettimeofday();;
+    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;
+    let waitValue = 1000./.frameRate;;
+
+    let rec wait start =
+      (*print_endline ((string_of_float (Unix.gettimeofday())) ^ " " ^ string_of_float(start));*)
+      if millis()-.start < waitValue then wait start
+    ;;
+
+    let mouseX () = fst (Graphics.mouse_pos ());;
+    let mouseY () = snd (Graphics.mouse_pos ());;
+
+    let size x y =
+      Graphics.open_graph (" " ^ (string_of_int x)^"x"^(string_of_int y));
+      Graphics.set_window_title nameWindow;
+    ;;
+
+    let exit () = Graphics.close_graph ();;
+
+    let color r g b = Graphics.rgb r g b;;
+
+    let fill co = Graphics.set_color (co);;
+
+    let rect x y w h =
+      Graphics.fill_rect x y w h
+    ;;
+
+    let background co =
+      fill co;
+      rect 0 0 width height
+    ;;
+
+    let ellipse x y w h =
+      Graphics.fill_ellipse x y (w/2) (h/2)
+    ;;
+
+    let set x y =
+      Graphics.plot x y
+    ;;
+
+    let line x1 y1 x2 y2 =
+      Graphics.moveto x1 y1;
+      Graphics.lineto x2 y2;
+    ;;
+
+    let strokeWeight x = Graphics.set_line_width x;;
+
+    let text txt x y =
+      Graphics.moveto x y;
+      Graphics.draw_string txt;
+    ;;
+
+    let input_line_option ch =
+      try Some(input_line ch) with
+      | _ -> None
+    ;;
+
+    let rec lireImagelignes_rec ch l =
+      let k = input_line_option ch in
+      match k with
+      | Some(s) -> lireImagelignes_rec ch (l ^ s)
+      | None -> close_in ch; l
+    ;;
+
+    let lireImagelignes data =
+      lireImagelignes_rec data ""
+    ;;
+
+    let rec charlist_of_string_rec s i l =
+      if i >= 0 then charlist_of_string_rec s (i-1) (String.get s i::l)
+      else l
+    ;;
+
+    let charlist_of_string s =
+      charlist_of_string_rec s ((String.length s)-1) []
+    ;;
+
+    let getImageWidthHeight x =
+      let out = fst (List.fold_left (fun acc c -> let data = fst acc in
+                                            let mode = snd acc in
+                                            if mode then
+                                              let out = (String.make 1 c) in (((fst data), (snd data) ^ out), mode)
+                                            else
+                                              let out = (String.make 1 c) in
+                                              if String.compare out "|" = 0 then (data, true)
+                                              else (((fst data)^out, snd data), mode)
+                                    ) (("",""), false) (charlist_of_string x)) in (int_of_string (fst out), int_of_string (snd out))
+    ;;
+
+    let stringArrayInt a =
+      (Array.fold_left (fun acc c -> acc ^ (string_of_int c)^" ") "[|" a) ^ "|]"
+    ;;
+
+    let stringArrayArrayInt a =
+      (Array.fold_left (fun acc c -> acc ^ (stringArrayInt c)^ "\n ") "[|" a) ^ "|]"
+    ;;
+
+    let rec makeImage s i a =
+      if i = Array.length (a)*Array.length (Array.get a 0) then a
+      else
+        match s with
+        | alpha::r::g::b::l -> (*print_endline ((string_of_int i) ^ " " ^ string_of_int(int_of_char r) ^ " " ^ string_of_int(int_of_char g) ^ " " ^ string_of_int(int_of_char b) ^ " " ^ string_of_int(int_of_char alpha))(* ^ " \n" ^ (stringArrayArrayInt a))*);*)
+                        Array.set (Array.get a (i/(Array.length (Array.get a 0)))) (i mod (Array.length (Array.get a 0))) (if (int_of_char alpha <> 0) then (Graphics.rgb (int_of_char r) (int_of_char g) (int_of_char b))
+                                                                                                                           else Graphics.transp);
+                        makeImage l (i+1) a
+        | _ -> (*print_endline (stringArrayArrayInt a );*) a
+    ;;
+
+    let loadImage path =
+      let data = open_in (path) in
+      let dimension = getImageWidthHeight (input_line data) in print_endline ("" ^ string_of_int(fst dimension) ^ " " ^ string_of_int(snd dimension));
+      let pixels = Array.init (snd dimension) (fun x -> Array.make (fst dimension) 0) in
+      Graphics.make_image (makeImage (charlist_of_string (lireImagelignes data)) 0 pixels)
+    ;;
+
+    let image im x y =
+      Graphics.draw_image im x y
+    ;;
+  end;;
+
+let keyPressed () =
+  if Graphics.key_pressed () then
+    let key = Graphics.read_key () in
+      Graph.text ("keyPressed : "^string_of_bool(true)^ " " ^ (String.make 1 key)) 20 (Graph.height-40);
+  else
+    Graph.text ("keyPressed : "^string_of_bool(false)) 20 (Graph.height-40);
+;;
+
+let setup () =
+  Graph.size Graph.width Graph.height;
+  Graphics.auto_synchronize false;
+;;
+
+let rec draw frameCount =
+  let startFrame = Graph.millis() in
+  Graph.background (Graph.color 255 255 255);
+  Graph.fill (Graph.color 0 0 0);
+  keyPressed ();
+  Graph.text (string_of_int frameCount) 20 (Graph.height-20);
+  Graph.text ("mousePressed : "^string_of_bool(Graphics.button_down ())) 20 (Graph.height-60);
+  Graph.fill (if frameCount mod 3 = 0 then (Graph.color 255 0 0)
+              else if frameCount mod 3 = 1 then (Graph.color 0 255 0)
+              else (Graph.color 0 0 255));
+  Graph.rect 0 0 100 100;
+  Graphics.synchronize ();
+  Graph.wait (startFrame);
+  draw (frameCount+1);
+;;
+
+let exit () =
+  Graph.exit()
+;;
