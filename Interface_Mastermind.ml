@@ -164,6 +164,7 @@ let clicV0() =
       let abs = att.mouse_x and ord = att.mouse_y in Printf.printf "abs = %d ; ord = %d\n" abs ord;;
 
 
+
 let quit_game () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 10 && posx < 75 )&&( posy > 10 && posy < 40 ) then close_graph() else print_string "NF";;
 (* pos quit 10 10 65 30 *)
@@ -254,6 +255,29 @@ let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 draw_table_circle 390 210 20 665 915 100 100;;
 
 
+let clic_draw_circle() = let pos = wait_next_event [Button_down] in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
+
+
+clic_draw_circle();;
+clic_draw_circle();;
+
+
+
+let rec clic_to_draw y = match y with
+|x when x<0 -> 0
+|x when x < 5 -> clic_draw_circle(); clic_to_draw(x+1)
+|_-> 1;;
+
+clic_to_draw 0;;
+
+
+
+(*
+for i = 0 to 10 do
+  clic_draw();
+done;; *)
+
 (*
 let rec draw_invade dx dy r endx endy espx espy i = match i with
 |0 -> draw_table_circle dx dy r endx endy espx espy
@@ -285,6 +309,7 @@ menu();;
 set_color green;;
 draw_rect 200 125 600 820;;
 
+
 (*
 let scan_int () = Scanf.scanf " %d" (fun x ->x);;
 
@@ -310,7 +335,7 @@ read_key();; (* -> char *)
 
 key_pressed();; (* T / F *)
 
-current_x;;
+current_x;; (* position actuelle *)
 
 print_string "here2" ;;
 button_down();;
