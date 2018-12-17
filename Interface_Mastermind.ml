@@ -132,6 +132,7 @@ let gris = rgb 191 191 191;;
 let rouge = rgb 250 0 0;;
 let brown = rgb 222 184 135;;
 
+
 set_line_width 1;;
 
 
@@ -233,6 +234,34 @@ draw_circle 550 900 20;;
 draw_circle 650 900 20;;
 
 print_string "here 0" ;;
+              (*        350 90 20 650 900  50   0 *)
+              (*               cte           cte cte      *)
+set_color yellow;;
+let draw_4_circle x y r espx espy =
+draw_circle x y r ;
+draw_circle (x+espx) y r ;
+draw_circle (x+(2*espx)) y r ;
+draw_circle (x+3*espx) y r ; ;;
+
+draw_4_circle 385 210 20 100 0;;
+
+set_color red;;
+
+let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
+|(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx espy ; draw_table_circle x (y+espy) r endx endy espx espy
+|(x,y) when y=dy -> 0;;
+
+draw_table_circle 390 210 20 665 915 100 100;;
+
+
+(*
+let rec draw_invade dx dy r endx endy espx espy i = match i with
+|0 -> draw_table_circle dx dy r endx endy espx espy
+|x when x<40 -> draw_table_circle dx dy r endx endy espx espy ; i+1 ; draw_invade (dx+i*2) (dy+i*2) r endx endy (espx+5) (espy+5) (x+1)
+;;
+
+set_color green;;
+draw_invade 200 125 20 670 900 100 100 0;; *)
 
 
 (*
@@ -256,7 +285,7 @@ menu();;
 set_color green;;
 draw_rect 200 125 600 820;;
 
-
+(*
 let scan_int () = Scanf.scanf " %d" (fun x ->x);;
 
 let cercle () =
@@ -273,7 +302,7 @@ let rect () =
    let k = scan_int() in (fill_rect x y l k) ;;
 rect ();;
 
-
+*)
 
 
 print_string "here1" ;;
