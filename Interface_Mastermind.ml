@@ -19,7 +19,7 @@ open Graphics;;
 #load "graphics.cma";;
 #load "camlimages.cma";;
 
-Graphics.open_graph " 1000x1000+400";;
+Graphics.open_graph " 1000x1000+600";;
 (*                       l x h
  Graphi
  cs.open_graph "";; <=> taille prédef
@@ -183,7 +183,7 @@ draw_rect 200 125 600 820;;
 print_string "here 0" ;;
 
 set_color yellow;;
-let draw_4_circle x y r espx espy =
+let draw_4_circle x y r espx =
 draw_circle x y r ;
 draw_circle (x+espx) y r ;
 draw_circle (x+(2*espx)) y r ;
@@ -192,11 +192,15 @@ draw_circle (x+3*espx) y r ; ;;
 
 set_color blue;;
 
+
+
+
 let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
-|(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx espy ; draw_table_circle x (y+espy) r endx endy espx espy
+|(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx ; draw_table_circle x (y+espy) r endx endy espx espy ;
 |(x,y) when y=dy -> 0;;
 
-draw_table_circle 350 180 20 665 940 100 80;; (* dessine les 10 lignes représentant les 10 essai du joueur *)
+draw_table_circle 350 180 20 665 940 100 80;; (* dessine les 10 lignes représentant les 10 essais du joueur *)
+
 
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
@@ -204,8 +208,6 @@ let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx pos
 
 let get_char () = read_key();;
 get_char();;
-
-
 
 set_color blue;;
 clic_draw_circle();;
@@ -278,8 +280,43 @@ colorer green;;
 
 let rec rempli_cercle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
-if ( posx > 430 && posx < 470 )&&( posy > 240 && posy < 280 ) then (fill_circle 450 180 20) else rempli_cercle();;
+if ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle();;
+
 rempli_cercle();;
+
+
+
+let rec membre_liste x l = match l with
+|[]-> false
+|a::r when a=x -> true
+|a::r -> membre_liste x r
+|_-> false;;
+
+let centres = [180;260;340;420;500;580;660;740;820;900];;
+
+let pm x c = match x with
+|a when (a<(c+20)) || (a>(c-20)) -> true (* si écart avec le centre d'un cercle = +/- 20 (rayon) alors true *)
+|_ -> false ;;  (* matcher chaque elt avec pm x pm y avec List.nth 1,2,3,4,4,5,6,7,8,9,10 *)
+
+let rec rempli_cercle_v2() = let pos = wait_next_event [Button_down] in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+if ( pm posx )&&( pm posy ) then (fill_circle 650 900 20) else rempli_cercle();;
+
+(*
+let verif x = x+20
+let voisinage () = fst(current_x) && snd(current_x) ;;
+*)
+
+(* *)
+let rec rempli_cercle_ligne() = let pos = wait_next_event [Button_down] and posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(x,y) when (* x>330 and x=330+a*100 when a = 1 || a=2 || a=3 *) x mod 110 = 0 -> fill_circle x y 20
+|_-> rempli_cercle_ligne()
+;;
+rempli_cercle_ligne();;
+(* *)
+(* if ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle_ligne();; *)
+
 
 
 colorer black;;
