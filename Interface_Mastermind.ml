@@ -164,7 +164,6 @@ let clicV0() =
       let abs = att.mouse_x and ord = att.mouse_y in Printf.printf "abs = %d ; ord = %d\n" abs ord;;
 
 
-
 let quit_game () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 10 && posx < 75 )&&( posy > 10 && posy < 40 ) then close_graph() else print_string "NF";;
 (* pos quit 10 10 65 30 *)
@@ -172,13 +171,15 @@ if ( posx > 10 && posx < 75 )&&( posy > 10 && posy < 40 ) then close_graph() els
 let option_clic () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 900 && posx < 965 )&&( posy > 10 && posy < 40 ) then  print_string "Option_clicked" else print_string "NF2";;
 
-
-
 set_color black;;
 fill_circle 350 90 20;;
 fill_circle 450 90 20;;
 fill_circle 550 90 20;;
 fill_circle 650 90 20;;
+
+set_color green;;
+draw_rect 200 125 600 820;;
+(*
 
 set_color blue;;
 draw_circle 350 180 20;;
@@ -232,7 +233,7 @@ set_color blue;;
 draw_circle 350 900 20;;
 draw_circle 450 900 20;;
 draw_circle 550 900 20;;
-draw_circle 650 900 20;;
+draw_circle 650 900 20;; *)
 
 print_string "here 0" ;;
               (*        350 90 20 650 900  50   0 *)
@@ -252,16 +253,76 @@ let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 |(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx espy ; draw_table_circle x (y+espy) r endx endy espx espy
 |(x,y) when y=dy -> 0;;
 
-draw_table_circle 390 210 20 665 915 100 100;;
+draw_table_circle 350 180 20 665 915 100 100;;
 
 
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
 
 
+let get_char () = read_key();;
+get_char();;
+
+
+
+
+set_color blue;;
 clic_draw_circle();;
 clic_draw_circle();;
 
+let colorer x = set_color x;;
+
+print_string " test color";
+
+fst(mouse_pos());;
+snd(mouse_pos());;
+
+let rec choose_color_v0 () =
+ print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+ let c = read_key(); and posx = fst(mouse_pos()) and posy = snd(mouse_pos())
+  in match c with
+   |'n' -> colorer black ; fill_circle posx posy 20
+   |'v' -> colorer green ; fill_circle posx posy 20
+   |'b' -> colorer blue ; fill_circle posx posy 20
+   |'r' -> colorer red ; fill_circle posx posy 20
+   |'j' -> colorer yellow ; fill_circle posx posy 20
+   |_ -> choose_color_v0(); (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
+
+;;
+
+choose_color_v0();;
+
+
+
+let rec choose_color_v1 i =
+ print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+ let c = read_key(); and posx = fst(mouse_pos()) and posy = snd(mouse_pos())
+  in match (c,i) with
+   |(y,x) when x=4 -> ()
+   |('n',x) -> colorer black ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
+   |('v',x) -> colorer green ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
+   |('b',x) -> colorer blue ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
+   |('r',x) -> colorer red ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
+   |('j',x) -> colorer yellow ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
+   |(_,x) -> choose_color_v1 x; (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
+
+;;
+
+choose_color_v1 0;;(*
+let choose_color () =
+ print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+ let c = read_key();
+  in match c with
+   |b -> set_color blue ;
+   |n -> set_color black ;
+   |r -> set_color red ;
+
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20)
+;;
+
+choose_color();;
+*)
+print_string " end test color";;
 
 
 let rec clic_to_draw y = match y with
@@ -269,8 +330,7 @@ let rec clic_to_draw y = match y with
 |x when x < 5 -> clic_draw_circle(); clic_to_draw(x+1)
 |_-> 1;;
 
-clic_to_draw 0;;
-
+clic_to_draw 1;;
 
 
 (*
@@ -306,9 +366,6 @@ match read_key() with
 menu();;
 
 *)
-set_color green;;
-draw_rect 200 125 600 820;;
-
 
 (*
 let scan_int () = Scanf.scanf " %d" (fun x ->x);;
@@ -328,7 +385,6 @@ let rect () =
 rect ();;
 
 *)
-
 
 print_string "here1" ;;
 read_key();; (* -> char *)
