@@ -32,7 +32,7 @@ Graphics.set_window_title " Test fenetre 1";;
 let gris = rgb 191 191 191;;
 let rouge = rgb 250 0 0;;
 let brown = rgb 222 184 135;;
-
+let violet = rgb 255 0 255;;
 set_line_width 1;;
 
 
@@ -70,7 +70,6 @@ draw_string "Test ecriture";;
 set_line_width 1;; (*- largeur lignes*)
 
 
-
 (* x y longueur largeur *)
 
 (*
@@ -94,7 +93,6 @@ fill_ellipse 450 250 10 15;;
 
 Graphics.draw_arc 160 160 80 110 50 360;;
 (* Graphics.draw_arc x y rx ry a b;; *)
-
 
 set_color red;;
 fill_rect 500 500 200 200;;
@@ -125,7 +123,8 @@ Graphics.lineto a b;;   - dessine 1 ligne   *)
 
 Graphics.current_point();;
 
-
+moveto 150 80;;
+draw_string "Combinaison";;
 
 set_color black;;
 let gris = rgb 191 191 191;;
@@ -179,65 +178,10 @@ fill_circle 650 90 20;;
 
 set_color green;;
 draw_rect 200 125 600 820;;
-(*
 
-set_color blue;;
-draw_circle 350 180 20;;
-draw_circle 450 180 20;;
-draw_circle 550 180 20;;
-draw_circle 650 180 20;;
-
-set_color blue;;
-draw_circle 350 270 20;;
-draw_circle 450 270 20;;
-draw_circle 550 270 20;;
-draw_circle 650 270 20;;
-
-set_color blue;;
-draw_circle 350 360 20;;
-draw_circle 450 360 20;;
-draw_circle 550 360 20;;
-draw_circle 650 360 20;;
-
-set_color blue;;
-draw_circle 350 450 20;;
-draw_circle 450 450 20;;
-draw_circle 550 450 20;;
-draw_circle 650 450 20;;
-
-set_color blue;;
-draw_circle 350 540 20;;
-draw_circle 450 540 20;;
-draw_circle 550 540 20;;
-draw_circle 650 540 20;;
-
-set_color blue;;
-draw_circle 350 630 20;;
-draw_circle 450 630 20;;
-draw_circle 550 630 20;;
-draw_circle 650 630 20;;
-
-set_color blue;;
-draw_circle 350 720 20;;
-draw_circle 450 720 20;;
-draw_circle 550 720 20;;
-draw_circle 650 720 20;;
-
-set_color blue;;
-draw_circle 350 810 20;;
-draw_circle 450 810 20;;
-draw_circle 550 810 20;;
-draw_circle 650 810 20;;
-
-set_color blue;;
-draw_circle 350 900 20;;
-draw_circle 450 900 20;;
-draw_circle 550 900 20;;
-draw_circle 650 900 20;; *)
 
 print_string "here 0" ;;
-              (*        350 90 20 650 900  50   0 *)
-              (*               cte           cte cte      *)
+
 set_color yellow;;
 let draw_4_circle x y r espx espy =
 draw_circle x y r ;
@@ -245,16 +189,14 @@ draw_circle (x+espx) y r ;
 draw_circle (x+(2*espx)) y r ;
 draw_circle (x+3*espx) y r ; ;;
 
-draw_4_circle 385 210 20 100 0;;
 
-set_color red;;
+set_color blue;;
 
 let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 |(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx espy ; draw_table_circle x (y+espy) r endx endy espx espy
 |(x,y) when y=dy -> 0;;
 
-draw_table_circle 350 180 20 665 915 100 100;;
-
+draw_table_circle 350 180 20 665 940 100 80;; (* dessine les 10 lignes représentant les 10 essai du joueur *)
 
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
@@ -262,7 +204,6 @@ let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx pos
 
 let get_char () = read_key();;
 get_char();;
-
 
 
 
@@ -308,7 +249,43 @@ let rec choose_color_v1 i =
 
 ;;
 
-choose_color_v1 0;;(*
+
+choose_color_v1 0;;
+
+let rec fill_grille i =
+
+ print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+ let c = read_key(); and posx = fst(mouse_pos()) and posy = snd(mouse_pos())
+  in match (c,i) with
+   |(y,x) when x=4 -> ()
+   |('n',x) -> colorer black ; fill_circle posx posy 20 ; fill_grille (x+1)
+   |('v',x) -> colorer green ; fill_circle posx posy 20 ; fill_grille (x+1)
+   |('b',x) -> colorer blue ; fill_circle posx posy 20 ; fill_grille (x+1)
+   |('r',x) -> colorer red ; fill_circle posx posy 20 ; fill_grille (x+1)
+   |('j',x) -> colorer yellow ; fill_circle posx posy 20 ; fill_grille (x+1)
+   |(_,x) -> fill_grille x;
+
+;;
+
+colorer violet;;
+
+let rec fill_grille_aux () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+if ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) then (fill_circle 350 180 20) else fill_grille_aux();;
+
+fill_grille_aux();;
+
+colorer green;;
+
+let rec rempli_cercle() = let pos = wait_next_event [Button_down] in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+if ( posx > 430 && posx < 470 )&&( posy > 240 && posy < 280 ) then (fill_circle 450 180 20) else rempli_cercle();;
+rempli_cercle();;
+
+
+colorer black;;
+
+
+(*
 let choose_color () =
  print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
  let c = read_key();
@@ -322,7 +299,7 @@ let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx pos
 
 choose_color();;
 *)
-print_string " end test color";;
+print_endline " end test color";;
 
 
 let rec clic_to_draw y = match y with
@@ -332,11 +309,6 @@ let rec clic_to_draw y = match y with
 
 clic_to_draw 1;;
 
-
-(*
-for i = 0 to 10 do
-  clic_draw();
-done;; *)
 
 (*
 let rec draw_invade dx dy r endx endy espx espy i = match i with
