@@ -4,15 +4,17 @@ type ocImage = {image : Graphics.image; width : int; height : int};;
 
 module Graph :
   sig
-    val pxIN : int
-    val width : int
-    val height : int
+    val pxIN : int ref
+    val width : int ref
+    val height : int ref
     val frameRate : float
     val millis : unit -> float
+    val translateX : int ref
+    val translateY : int ref
 
     val wait : float -> unit
 
-    val setup : unit -> unit
+    val setup : int -> int -> int -> unit
 
     val nameWindow : string
 
@@ -31,8 +33,9 @@ module Graph :
     val mouseProc : unit -> unit
 
     val size : int -> int -> unit
-
     val exit : unit -> unit
+
+    val translate : int -> int -> unit
 
     val color : int -> int -> int -> Graphics.color
 
@@ -65,14 +68,16 @@ module Graph :
   end =
   struct
 
-    let pxIN = 4;;
-    let width = pxIN*200;;
-    let height = pxIN*150;;
+    let pxIN = ref 1;;
+    let width = ref 1(*pxIN*200*);;
+    let height = ref 1(*pxIN*150*);;
     let nameWindow = "MasterMind";;
     let frameRate = 60.;; (* fps *)
+    let translateX = ref 0;;
+    let translateY = ref 0;;
 
     let startMillisCount = Unix.gettimeofday();;
-    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;width
+    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;
     let waitValue = 1000./.frameRate;;
 
     let frameCount = ref 0;;
@@ -100,7 +105,7 @@ module Graph :
     let beginDraw () =
       let mouseCoord = Graphics.mouse_pos () in
       mouseX := fst (mouseCoord);
-      mouseY := snd (mouseCoord);
+      mouseY := !height-1 - snd (mouseCoord);
       frameCount := !frameCount+1;
       mouseProc ();
       startFrame := millis()
@@ -127,9 +132,17 @@ module Graph :
       Graphics.set_font "-*-fixed-medium-r-semicondensed--25-*-*-*-*-*-iso8859-1";
     ;;
 
-    let setup () =
-      size width height;
+    let setup w h p =
+      width := w;
+      height := h;
+      pxIN := p;
+      size !width !height;
       Graphics.auto_synchronize false;
+    ;;
+
+    let translate x y =
+      translateX := x;
+      translateY := y;
     ;;
 
     let color r g b = Graphics.rgb r g b;;
@@ -137,31 +150,31 @@ module Graph :
     let fill co = Graphics.set_color (co);;
 
     let rect x y w h =
-      Graphics.fill_rect x y w h
+      Graphics.fill_rect (x+ !translateX) (!height-1 - y - h - !translateY) w h
     ;;
 
     let background co =
       fill co;
-      rect 0 0 width height
+      Graphics.fill_rect 0 0 !width !height
     ;;
 
     let ellipse x y w h =
-      Graphics.fill_ellipse x y (w/2) (h/2)
+      Graphics.fill_ellipse (x+w/2+ !translateX) (!height-1-y-h/2- !translateY) (w/2) (h/2)
     ;;
 
     let set x y =
-      Graphics.plot x y
+      Graphics.plot (x+ !translateX) (!height-1-y- !translateY)
     ;;
 
     let line x1 y1 x2 y2 =
-      Graphics.moveto x1 y1;
-      Graphics.lineto x2 y2;
+      Graphics.moveto (x1+ !translateX) (!height-1-y1- !translateY);
+      Graphics.lineto (x2+ !translateX) (!height-1-y2- !translateY);
     ;;
 
     let strokeWeight x = Graphics.set_line_width x;;
 
     let text txt x y =
-      Graphics.moveto x y;
+      Graphics.moveto (x+ !translateX) ((!height)-1 -y-(snd(Graphics.text_size ""))- !translateY);
       Graphics.draw_string txt;
     ;;
 
@@ -173,7 +186,7 @@ module Graph :
     let rec lireImagelignes_rec ch l =
       let k = input_line_option ch in
       match k with
-      | Some(s) -> lireImagelignes_rec ch (l ^ s)
+      | Some(s) -> lireImagelignes_rec ch (l ^ s ^ "\n")
       | None -> close_in ch; l
     ;;
 
@@ -249,94 +262,11 @@ module Graph :
     ;;
 
     let loadImagePx path =
-      let im = resize (getImage path) pxIN in
+      let im = resize (getImage path) !pxIN in
       {image = Graphics.make_image im; width = Array.length (Array.get im 0); height = Array.length im}
     ;;
 
     let image im x y =
-      Graphics.draw_image im.image x y
+      Graphics.draw_image im.image (x+ !translateX) (!height-y-im.height- !translateY)
     ;;
   end;;
-
-(*
-let rec draw frameCount =
-  let startFrame = Graph.millis() in
-  Graph.background (Graph.color 255 255 255);
-  Graph.fill (Graph.color 0 0 0);
-  keyPressed ();      Graphics.draw_image im.image x y
-
-  Graph.text (string_of_int frameCount) 20 (Graph.height-20);
-  Graph.text ("mousePressed : "^string_of_bool(Graphics.button_down ())) 20 (Graph.height-60);
-  Graph.text ("millis() : "^string_of_float(Graph.millis ())) 20 (Graph.height-80);
-  Graph.fill (if frameCGraphount mod 3 = 0 then (Graph.color 255 0 0)
-              else if frameCount mod 3 = 1 then (Graph.color 0 255 0)
-              else (Graph.color 0 0 255));
-  Graph.rect 0 0 100 100;
-  Graphics.synchronize ();
-  Graph.wait (startFrame);
-  draw (frameCount+1);
-;;*)
-
-let key = ref '_';;
-
-Graph.setup();;
-let im = Graph.loadImagePx ("./data/TokenEnd.im");;
-let imN = Graph.loadImage ("./data/TokenEnd.im");;
-(*print_endline (string_of_int(im.width) ^ " " ^ string_of_int(im.height));;*)
-(*)
-let exit () =
-  Graph.exit()
-;;*)
-
-let screen1 () =
-  let choiceScr = ref 1 in
-  Graph.background (Graph.color 0 0 0);
-  if Graphics.key_pressed () then
-    (match Graphics.read_key () with
-    | _ -> ()
-    )
-  ;
-  Graph.fill(Graph.color 255 255 255);
-  Graph.rect (Graph.width-20) (Graph.height-20) (20) (20);
-  if !Graph.mousePressed then
-    if !Graph.mouseX >= (Graph.width-20) && !Graph.mouseX <= Graph.width && !Graph.mouseY >= (Graph.height-20) && !Graph.mouseY <= Graph.height then choiceScr := -1;
-  !choiceScr
-;;
-
-let screen0 () =
-  let choiceScr = ref 0 in
-  Graph.background (Graph.color 255 255 255);
-  Graph.fill (Graph.color 0 0 0);
-  Graph.text (string_of_int !Graph.frameCount) 20 (Graph.height-40);
-  Graph.image imN 0 90;
-  Graph.image im (int_of_float(((float_of_int(int_of_float(Graph.millis()) mod 6000)/.6000.)*.float_of_int(Graph.width-im.width)))) 0;
-  if Graphics.key_pressed () then
-    (match Graphics.read_key () with
-    | x -> key := x;
-    | _ -> ()
-    )
-  ;
-  Graph.rect (Graph.width-20) (Graph.height-20) (20) (20);
-  Graph.text (String.make 1 !key) 20 (Graph.height-70);
-  if !Graph.mousePressed then
-    if !Graph.mouseX >= (Graph.width-20) && !Graph.mouseX <= Graph.width && !Graph.mouseY >= (Graph.height-20) && !Graph.mouseY <= Graph.height then choiceScr := 1;
-  !choiceScr
-;;
-
-let screenList = [screen0; screen1];;
-(*
-Screen Format :
-
-(fun () ->
-      Graph.background (Graph.color 255 255 255);
-      if Graphics.key_pressed () then
-        (match Graphics.read_key () with
-        | _ -> ()
-        )
-      ;
-      if Graphics.button_down () then
-        ()
-      ;
-)
-
-*)
