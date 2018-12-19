@@ -1,8 +1,10 @@
 #load "graphics.cma";;
 #load "unix.cma";;
+type ocImage = {image : Graphics.image; width : int; height : int};;
 
 module Graph :
   sig
+
     val width : int
     val height : int
     val frameRate : float
@@ -11,8 +13,15 @@ module Graph :
     val wait : float -> unit
 
     val nameWindow : string
-    val mouseX : unit -> int
-    val mouseY : unit -> int
+
+    val frameCount : int ref
+    val mouseX : int ref
+    val mouseY : int ref
+    val startFrame : float ref
+
+    val beginDraw : unit -> unit
+    val endDraw : unit -> unit
+    val draw : (unit -> unit) -> unit
 
     val size : int -> int -> unit
 
@@ -38,32 +47,56 @@ module Graph :
 
     val wait : float -> unit
 
-    val loadImage : string -> Graphics.image
+    val loadImage : string -> ocImage
 
-    val image : Graphics.image -> int -> int -> unit
+    val image : ocImage -> int -> int -> unit
 
   end =
   struct
-    let width = 500;;
-    let height = 500;;
+
+    let width = 800;;
+    let height = 600;;
     let nameWindow = "MasterMind";;
     let frameRate = 60.;; (* fps *)
 
     let startMillisCount = Unix.gettimeofday();;
-    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;
+    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;width
     let waitValue = 1000./.frameRate;;
+
+    let frameCount = ref 0;;
+    let mouseX = ref 0;;
+    let mouseY = ref 0;;
+    let startFrame = ref 0.;;
 
     let rec wait start =
       (*print_endline ((string_of_float (Unix.gettimeofday())) ^ " " ^ string_of_float(start));*)
       if millis()-.start < waitValue then wait start
     ;;
 
-    let mouseX () = fst (Graphics.mouse_pos ());;
-    let mouseY () = snd (Graphics.mouse_pos ());;
+    let beginDraw () =
+      let mouseCoord = Graphics.mouse_pos () in
+      mouseX := fst (mouseCoord);
+      mouseY := snd (mouseCoord);
+      frameCount := !frameCount+1;
+      startFrame := millis()
+    ;;
+
+    let endDraw () =
+      Graphics.synchronize ();
+      wait (!startFrame);
+    ;;
+
+    let rec draw proc =
+      beginDraw();
+      proc ();
+      endDraw();
+      draw proc;
+    ;;
 
     let size x y =
       Graphics.open_graph (" " ^ (string_of_int x)^"x"^(string_of_int y));
       Graphics.set_window_title nameWindow;
+      Graphics.set_font "-*-fixed-medium-r-semicondensed--25-*-*-*-*-*-iso8859-1";
     ;;
 
     let exit () = Graphics.close_graph ();;
@@ -161,11 +194,11 @@ module Graph :
       let data = open_in (path) in
       let dimension = getImageWidthHeight (input_line data) in print_endline ("" ^ string_of_int(fst dimension) ^ " " ^ string_of_int(snd dimension));
       let pixels = Array.init (snd dimension) (fun x -> Array.make (fst dimension) 0) in
-      Graphics.make_image (makeImage (charlist_of_string (lireImagelignes data)) 0 pixels)
+      {image = Graphics.make_image (makeImage (charlist_of_string (lireImagelignes data)) 0 pixels); width = (fst dimension); height = (snd dimension)}
     ;;
 
     let image im x y =
-      Graphics.draw_image im x y
+      Graphics.draw_image im.image x y
     ;;
   end;;
 
@@ -182,21 +215,67 @@ let setup () =
   Graphics.auto_synchronize false;
 ;;
 
+(*
 let rec draw frameCount =
   let startFrame = Graph.millis() in
   Graph.background (Graph.color 255 255 255);
   Graph.fill (Graph.color 0 0 0);
-  keyPressed ();
+  keyPressed ();      Graphics.draw_image im.image x y
+
   Graph.text (string_of_int frameCount) 20 (Graph.height-20);
   Graph.text ("mousePressed : "^string_of_bool(Graphics.button_down ())) 20 (Graph.height-60);
-  Graph.fill (if frameCount mod 3 = 0 then (Graph.color 255 0 0)
+  Graph.text ("millis() : "^string_of_float(Graph.millis ())) 20 (Graph.height-80);
+  Graph.fill (if frameCGraphount mod 3 = 0 then (Graph.color 255 0 0)
               else if frameCount mod 3 = 1 then (Graph.color 0 255 0)
               else (Graph.color 0 0 255));
   Graph.rect 0 0 100 100;
   Graphics.synchronize ();
   Graph.wait (startFrame);
   draw (frameCount+1);
-;;
+;;*)
+
+let key = ref '_';;
+
+setup();;
+let im = Graph.loadImage ("./google.im");;
+print_endline (string_of_int(im.width) ^ " " ^ string_of_int(im.height));;
+
+let screen1 =
+(fun () ->
+      Graph.background (Graph.color 255 255 255);
+      Graph.fill (Graph.color 0 0 0);
+      Graph.text (string_of_int !Graph.frameCount) 20 (Graph.height-40);
+      Graph.image im (int_of_float(((float_of_int(int_of_float(Graph.millis()) mod 6000)/.6000.)*.float_of_int(Graph.width-im.width)))) 0;
+      if Graphics.key_pressed () then
+        (match Graphics.read_key () with
+        | x -> key := x;
+        | _ -> ()
+        )
+      ;
+      Graph.rect (Graph.width-20) (Graph.height-20) (20) (20);
+      Graph.text (String.make 1 !key) 20 (Graph.height-70);
+      if Graphics.button_down () then
+        if !Graph.mouseX >= (Graph.width-20) && !Graph.mouseX <= Graph.width && !Graph.mouseY >= (Graph.height-20) && !Graph.mouseY <= Graph.height then
+          exit();
+        Graph.rect (!Graph.mouseX-10) (!Graph.mouseY-10) 20 20
+      ;
+);;
+(*
+Screen Format :
+
+(fun () ->
+      Graph.background (Graph.color 255 255 255);
+      if Graphics.key_pressed () then
+        (match Graphics.read_key () with
+        | _ -> ()
+        )
+      ;
+      if Graphics.button_down () then
+        ()
+      ;
+)
+
+*)
 
 let exit () =
   Graph.exit()
