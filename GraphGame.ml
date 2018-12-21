@@ -1,272 +1,261 @@
-#load "graphics.cma";;
-#load "unix.cma";;
-type ocImage = {image : Graphics.image; width : int; height : int};;
+#use "GraphLib.ml";;
+#use "Code.ml";;
 
-module Graph :
-  sig
-    val pxIN : int ref
-    val width : int ref
-    val height : int ref
-    val frameRate : float
-    val millis : unit -> float
-    val translateX : int ref
-    val translateY : int ref
+(* OBLIGATOIRE :
+Code.nombre_pions = 4
+Code.couleurs_possibles = 6 ou moins
+*)
+let secretCode = ref (Code.makeCode "abcd");;
 
-    val wait : float -> unit
+let makeCodeMode = 0;;
+let makeAnswerMode = 1;;
+let gameMode = ref makeCodeMode;; (* 0 : on peut crée notre code
+                          1 : on peut faire notre reponse *)
+let answerIA = ref true;;
+let nombre_pions = 4;; (*pour prevenir le cas Code.nombre_pions <> 4*)
 
-    val setup : int -> int -> int -> unit
+let round f = floor (f +. 0.5);;
+let roundInt f = int_of_float (floor (f +. 0.5));;
+let floatc x = float_of_int x;;
+let intc x = int_of_float x;;
 
-    val nameWindow : string
+let pxIN = 4;;
+Graph.setup (200*pxIN) (150*pxIN) pxIN;;
 
-    val frameCount : int ref
-    val mouseX : int ref
-    val mouseY : int ref
-    val startFrame : float ref
-    val mousePos : bool ref
-    val mousePressed : bool ref
-    val mouseReleased : bool ref
+let tokenCodeStartX = 57;;
+let tokenCodeStepX = 12;;
+let tokenCodeStartY = 133;;
+let tokenCodeStepY = 14;;
 
-    val beginDraw : unit -> unit
-    val endDraw : unit -> unit
-    val draw : (unit -> int) list -> int -> unit
+type image = {image : ocImage; x : float ref; y : float ref};;
+type imageObj = {imageo : ocImage; xo : float ref; yo : float ref; objx : float ref; objy : float ref; k : float};; (* Obj pour objectif *)
+type imageCode = {color : Code.t; listAnswer : imageObj list};;
 
-    val mouseProc : unit -> unit
+let loadImagePx path _x _y = {image = Graph.loadImagePx path; x = ref (_x*.(floatc(!Graph.pxIN))); y = ref (_y*.(floatc(!Graph.pxIN)))};;
+let loadImageObjPx path _x _y _objx _objy _k = {imageo = Graph.loadImagePx path; xo = ref (_x*.(floatc(!Graph.pxIN))); yo = ref (_y*.(floatc(!Graph.pxIN))); objx = ref (_objx*.(floatc(!Graph.pxIN))); objy = ref (_objy*.(floatc(!Graph.pxIN))); k = _k};;
 
-    val size : int -> int -> unit
-    val exit : unit -> unit
+let image im = Graph.image (im.image) (roundInt !(im.x)) (roundInt !(im.y));;
+let imageObj im =
+im.xo := !(im.xo)+. im.k*.(!(im.objx)-. !(im.xo));
+im.yo := !(im.yo)+. im.k*.(!(im.objy)-. !(im.yo));
+(Graph.image (im.imageo) (roundInt !(im.xo)) (roundInt !(im.yo)));;
 
-    val translate : int -> int -> unit
+let back = loadImagePx ("./data/Back.im") 0. 0.;;
+let board = loadImagePx ("./data/Board.im") 46. 0.;;
 
-    val color : int -> int -> int -> Graphics.color
+let answerWellplaced = Graph.loadImagePx "./data/TokenWellPlaced.im";;
+let answerMisplaced = Graph.loadImagePx "./data/TokenMisplaced.im";;
 
-    val fill : Graphics.color -> unit
+let codeArrayList = ref [];;
+let codeArray = Array.make nombre_pions None;;
+(*let codeAnswer = ;;*)
+(*codeArrayList := {color = (Code.makeCode "abcd"); listAnswer = [{imageo = answerWellplaced; xo = ref (floatc(50* !Graph.pxIN));  yo = ref (floatc(134* !Graph.pxIN)); objx = ref (floatc(5* !Graph.pxIN)); objy = ref (floatc(134* !Graph.pxIN)); k = 0.1}]}:: !codeArrayList;;
+*)
+let codeSelectedX = 54.;;
+let codeSelectedY = 131.;;
+let codeSelectedStep = 14.;;
 
-    val rect : int -> int -> int -> int -> unit
+let codeSelectedImage =  loadImageObjPx ("./data/CodeSelector.im") codeSelectedX codeSelectedY codeSelectedX codeSelectedY 0.1;;
 
-    val background : Graphics.color -> unit
+let tokenList =
+  let rec makeList l i =
+    if i = -1 then l
+    else makeList ((Graph.loadImagePx ("./data/"^(string_of_int i)^".im"))::l) (i-1)
+  in makeList [] ((List.length Code.couleurs_possibles)-1)
+;;
+let tokenStartX = 113;;
+let tokenStartY = 131;;
+let tokenStep = 12;;
 
-    val ellipse : int -> int -> int -> int -> unit
+let codeSelected = ref 0;;
+let tokenSelected = ref (-1);;
 
-    val set : int -> int -> unit
+let drawTokenList () =
+  List.fold_left (fun acc c -> let i = acc in
+                               if i <> !tokenSelected then (Graph.image c (tokenStartX* !Graph.pxIN) ((tokenStartY-i*tokenStep)* !Graph.pxIN));
+                               i+1
+                          ) 0 tokenList;
+  if !tokenSelected <> -1 then
+  (let c = (List.nth tokenList !tokenSelected) in
+  Graph.image c (!Graph.mouseX-roundInt((float_of_int (c.width))/.2.)) (!Graph.mouseY-roundInt((float_of_int (c.height))/.2.)))
+;;
 
-    val line : int -> int -> int -> int -> unit
+let tokenSelectedHitBox i c =
+  (*print_endline (string_of_int i);*)
+  let x = tokenStartX* !Graph.pxIN in
+  let y = ((tokenStartY-i*tokenStep))* !Graph.pxIN in
+  let mx = !Graph.mouseX in let my = !Graph.mouseY in (*Graph.rect (x+1* !Graph.pxIN) (y+(1* !Graph.pxIN)) (7* !Graph.pxIN) (7* !Graph.pxIN);*)
+  if (mx >= x+1* !Graph.pxIN && mx <= x+8* !Graph.pxIN && my >= y+(1* !Graph.pxIN) && my <= y+(8* !Graph.pxIN))
+  || (mx >= x+3* !Graph.pxIN && mx <= x+6* !Graph.pxIN && my >= y && my <= y+(9* !Graph.pxIN))
+  || (mx >= x && mx <= x+(9* !Graph.pxIN) && my >= y+(3* !Graph.pxIN) && my <= y+(6* !Graph.pxIN))
+  then tokenSelected := i;
+;;
 
-    val strokeWeight : int -> unit
+let tokenListSelectedHitBox () =
+  tokenSelected := -1;
+  List.fold_left (fun acc c -> tokenSelectedHitBox acc c; acc+1
+                  ) 0 tokenList;
+;;
 
-    val text : string -> int -> int -> unit
+let updateGameMode x =
+  gameMode := x;
+  if !gameMode = makeCodeMode then
+    (
 
-    val wait : float -> unit
+      );
+  if !gameMode = makeAnswerMode then
+    (
+      if !answerIA then
+        (
 
-    val getImage : string -> Graphics.color array array
+          )
+      else ()
+      );
+;;
 
-    val loadImage : string -> ocImage
+let updateCodeSelectedImage () =
+  codeSelectedImage.objy := (codeSelectedY -. floatc (!codeSelected) *. codeSelectedStep) *. floatc (!Graph.pxIN);
+;;
 
-    val loadImagePx : string -> ocImage
+let updateCodeSelected () =
+  codeSelected := !codeSelected+1;
+  updateCodeSelectedImage()
+;;
 
-    val image : ocImage -> int -> int -> unit
+let drawCodeArrayList () =
+  List.fold_left (fun accy c -> List.fold_left (fun accx c_ -> let color = match c_ with
+                                                                          | Code.Color(x) -> x
+                                                                          | _ -> -1 in
+                                                              Graph.image (List.nth tokenList color) (((tokenCodeStartX+accx*tokenCodeStepX+1)* !Graph.pxIN)) (((tokenCodeStartY-accy*tokenCodeStepY+1)* !Graph.pxIN));
+                                                              accx+1
+                                               ) 0 c.color;
+                                List.fold_left (fun acc_ c_ -> imageObj (c_); acc_
+                                                ) 0 c.listAnswer;
+                                  accy+1
+                  ) 0 (!codeArrayList)
+;;
 
-  end =
-  struct
+let drawCodeArray () =
+  Array.fold_left (fun acc c -> (match c with
+                                 | Some(Code.Color(x)) -> Graph.image (List.nth tokenList x)
+                                                          (((tokenCodeStartX+acc*tokenCodeStepX+1)* !Graph.pxIN))
+                                                          (((tokenCodeStartY-(! codeSelected)*tokenCodeStepY+1)* !Graph.pxIN))
+                                 | None -> ());
+                                 acc+1
+                  ) 0 codeArray
+;;
 
-    let pxIN = ref 1;;
-    let width = ref 1(*pxIN*200*);;
-    let height = ref 1(*pxIN*150*);;
-    let nameWindow = "MasterMind";;
-    let frameRate = 60.;; (* fps *)
-    let translateX = ref 0;;
-    let translateY = ref 0;;
+let tokenCodeHitBox x y =
+  let x = (tokenCodeStartX+x*tokenCodeStepX)* !Graph.pxIN in
+  let y = (tokenCodeStartY-(!codeSelected)*tokenCodeStepY)* !Graph.pxIN in
+  let mx = !Graph.mouseX in
+  let my = !Graph.mouseY in (*Graph.line (x+(1)* !Graph.pxIN) (y+(1)* !Graph.pxIN) (x+(tokenCodeStepX-2)* !Graph.pxIN) (y+(tokenCodeStepX-2)* !Graph.pxIN);
+  Graph.line (x+(3)* !Graph.pxIN ) (y) (x+(8)* !Graph.pxIN) (y+(11)* !Graph.pxIN);
+  Graph.line (x) (y+(3)* !Graph.pxIN) (x+11* !Graph.pxIN) (y+(8)* !Graph.pxIN);*)
+  (mx >= x+(1)* !Graph.pxIN && mx <= x+(tokenCodeStepX-2)* !Graph.pxIN && my >= y+(1)* !Graph.pxIN && my <= y+(tokenCodeStepX-2)* !Graph.pxIN) ||
+  (mx >= x+(3)* !Graph.pxIN && mx <= x+(8)* !Graph.pxIN && my >= y && my <= y+(11)* !Graph.pxIN) ||
+  (mx >= x && mx <= x+11* !Graph.pxIN && my >= y+(3)* !Graph.pxIN && my <= y+(8)* !Graph.pxIN)
+;;
 
-    let startMillisCount = Unix.gettimeofday();;
-    let millis () = (Unix.gettimeofday()-.startMillisCount)*.1000.;;
-    let waitValue = 1000./.frameRate;;
+let codeSelection () =
+  if !gameMode = makeCodeMode && !tokenSelected <> -1  then
+    (let newTokenSelected = fst(
+    Array.fold_left (fun acc c -> let i = snd acc in
+                                  match tokenCodeHitBox i !codeSelected with
+                                    | true -> Array.set codeArray i (Some(Code.Color( !tokenSelected))); (-1, i+1)
+                                    | false -> (fst acc, i+1)
+                      ) (!tokenSelected,0) codeArray) in
+    if newTokenSelected = -1 then
+      (tokenSelected := newTokenSelected;
+        if Array.fold_left (fun acc c -> acc && c <> None) true codeArray then
+        updateGameMode makeAnswerMode;
+        );
+    );
+;;
 
-    let frameCount = ref 0;;
-    let mouseX = ref 0;;
-    let mouseY = ref 0;;
-    let startFrame = ref 0.;;
-    let mousePos = ref false;;
-    let mousePressed = ref false;;
-    let mouseReleased = ref false;;
+let screenGame () =
+  let choiceScr = ref 0 in
+  Graph.background (Graph.color 0 0 0);
+  image back;
+  image board;
+  drawCodeArrayList ();
+  drawCodeArray ();
+  imageObj codeSelectedImage;
+  drawTokenList ();
+  Graph.fill(Graph.color 255 255 255);
+  Graph.text (string_of_int !Graph.frameCount) 0 0;
+  Graph.text (string_of_int !codeSelected) 0 40;
+  Graph.text (string_of_int(!Graph.mouseX) ^ " " ^ string_of_int(!Graph.mouseY)) 0 80;
+  Graph.text (string_of_int(fst (Graphics.mouse_pos ())) ^ " " ^ string_of_int(snd (Graphics.mouse_pos ()))) 0 120;
+  (*Graph.rect (!Graph.mouseX -20) (!Graph.mouseY-20) (20) (20);*)
+  if Graphics.key_pressed () then
+    (match Graphics.read_key () with
+    | 'a' -> updateCodeSelected()
+    | _ -> ()
+    )
+  ;
+  if !Graph.mousePressed then
+    (
+    codeSelection();
+    tokenListSelectedHitBox ();
+    if !Graph.mouseX >= (!Graph.width-20) && !Graph.mouseX <= !Graph.width && !Graph.mouseY >= (0) && !Graph.mouseY <= 20 then (choiceScr := -1);
+    )
+  ;
+  !choiceScr
+;;
 
-    let rec wait start =
-      (*print_endline ((string_of_float (Unix.gettimeofday())) ^ " " ^ string_of_float(start));*)
-      if millis()-.start < waitValue then wait start
-    ;;
+let screenList = [screenGame];;
 
-    let mouseProc () =
-      let bool = ref false in
-      if Graphics.button_down () <> !mousePos then
-        bool := true;
-      if !bool then mousePos := not (!mousePos);
-      mousePressed := (!bool && !mousePos);
-      mouseReleased := (!bool && not(!mousePos))
-    ;;
+Graph.draw screenList 0;;
 
-    let beginDraw () =
-      let mouseCoord = Graphics.mouse_pos () in
-      mouseX := fst (mouseCoord);
-      mouseY := !height-1 - snd (mouseCoord);
-      frameCount := !frameCount+1;
-      mouseProc ();
-      startFrame := millis()
-    ;;
+(*
+Screen Format :
 
-    let endDraw () =
-      Graphics.synchronize ();
-      wait (!startFrame);
-    ;;
+(fun () ->
+      Graph.background (Graph.color 255 255 255);
+      if Graphics.key_pressed () then
+        (match Graphics.read_key () with
+        | _ -> ()
+        )
+      ;
+      if Graphics.button_down () then
+        ()
+      ;
+)
 
-    let exit () = Graphics.close_graph ();;
+*)
+(*
+let screen1 () =
+  let choiceScr = ref 1 in
+  Graph.background (Graph.color 0 0 0);
+  if Graphics.key_pressed () then
+    (match Graphics.read_key () with
+    | _ -> ()
+    )
+  ;
+  Graph.fill(Graph.color 255 255 255);
+  Graph.rect (Graph.width-20) (Graph.height-20) (20) (20);
+  if !Graph.mousePressed then
+    if !Graph.mouseX >= (Graph.width-20) && !Graph.mouseX <= Graph.width && !Graph.mouseY >= (Graph.height-20) && !Graph.mouseY <= Graph.height then choiceScr := -1;
+  !choiceScr
+;;
 
-    let rec draw proc choosed =
-      beginDraw();
-      let i = (List.nth proc choosed) () in
-      endDraw();
-      if i >= 0 then draw proc i
-      else exit()
-    ;;
-
-    let size x y =
-      Graphics.open_graph (" " ^ (string_of_int x)^"x"^(string_of_int y));
-      Graphics.set_window_title nameWindow;
-      Graphics.set_font "-*-fixed-medium-r-semicondensed--25-*-*-*-*-*-iso8859-1";
-    ;;
-
-    let setup w h p =
-      width := w;
-      height := h;
-      pxIN := p;
-      size !width !height;
-      Graphics.auto_synchronize false;
-    ;;
-
-    let translate x y =
-      translateX := x;
-      translateY := y;
-    ;;
-
-    let color r g b = Graphics.rgb r g b;;
-
-    let fill co = Graphics.set_color (co);;
-
-    let rect x y w h =
-      Graphics.fill_rect (x+ !translateX) (!height-1 - y - h - !translateY) w h
-    ;;
-
-    let background co =
-      fill co;
-      Graphics.fill_rect 0 0 !width !height
-    ;;
-
-    let ellipse x y w h =
-      Graphics.fill_ellipse (x+w/2+ !translateX) (!height-1-y-h/2- !translateY) (w/2) (h/2)
-    ;;
-
-    let set x y =
-      Graphics.plot (x+ !translateX) (!height-1-y- !translateY)
-    ;;
-
-    let line x1 y1 x2 y2 =
-      Graphics.moveto (x1+ !translateX) (!height-1-y1- !translateY);
-      Graphics.lineto (x2+ !translateX) (!height-1-y2- !translateY);
-    ;;
-
-    let strokeWeight x = Graphics.set_line_width x;;
-
-    let text txt x y =
-      Graphics.moveto (x+ !translateX) ((!height)-1 -y-(snd(Graphics.text_size ""))- !translateY);
-      Graphics.draw_string txt;
-    ;;
-
-    let input_line_option ch =
-      try Some(input_line ch) with
-      | _ -> None
-    ;;
-
-    let rec lireImagelignes_rec ch l =
-      let k = input_line_option ch in
-      match k with
-      | Some(s) -> lireImagelignes_rec ch (l ^ s ^ "\n")
-      | None -> close_in ch; l
-    ;;
-
-    let lireImagelignes data =
-      lireImagelignes_rec data ""
-    ;;
-
-    let rec charlist_of_string_rec s i l =
-      if i >= 0 then charlist_of_string_rec s (i-1) (String.get s i::l)
-      else l
-    ;;
-
-    let charlist_of_string s =
-      charlist_of_string_rec s ((String.length s)-1) []
-    ;;
-
-    let getImageWidthHeight x =
-      let out = fst (List.fold_left (fun acc c -> let data = fst acc in
-                                            let mode = snd acc in
-                                            if mode then
-                                              let out = (String.make 1 c) in (((fst data), (snd data) ^ out), mode)
-                                            else
-                                              let out = (String.make 1 c) in
-                                              if String.compare out "|" = 0 then (data, true)
-                                              else (((fst data)^out, snd data), mode)
-                                    ) (("",""), false) (charlist_of_string x)) in (int_of_string (fst out), int_of_string (snd out))
-    ;;
-
-    let stringArrayInt a =
-      (Array.fold_left (fun acc c -> acc ^ (string_of_int c)^" ") "[|" a) ^ "|]"
-    ;;
-
-    let stringArrayArrayInt a =
-      (Array.fold_left (fun acc c -> acc ^ (stringArrayInt c)^ "\n ") "[|" a) ^ "|]"
-    ;;
-
-    let rec makeImage s i a =
-      (*print_endline (string_of_int i);*)
-      if i = Array.length (a)*Array.length (Array.get a 0) then a
-      else
-        match s with
-        | alpha::r::g::b::l -> (*print_endline ((string_of_int i) ^ " " ^ string_of_int(int_of_char r) ^ " " ^ string_of_int(int_of_char g) ^ " " ^ string_of_int(int_of_char b) ^ " " ^ string_of_int(int_of_char alpha))(* ^ " \n" ^ (stringArrayArrayInt a))*);*)
-                        Array.set (Array.get a (i/(Array.length (Array.get a 0)))) (i mod (Array.length (Array.get a 0))) (if (int_of_char alpha <> 0) then (Graphics.rgb (int_of_char r) (int_of_char g) (int_of_char b))
-                                                                                                                           else Graphics.transp);
-                        makeImage l (i+1) a
-        | _ -> (*print_endline (stringArrayArrayInt a );*) a
-    ;;
-
-    let getImage path =
-      let data = open_in (path) in
-      let dimension = getImageWidthHeight (input_line data) in print_endline ("" ^ string_of_int(fst dimension) ^ " " ^ string_of_int(snd dimension));
-      let pixels = Array.init (snd dimension) (fun x -> Array.make (fst dimension) 0) in
-        (makeImage (charlist_of_string (lireImagelignes data)) 0 pixels)
-    ;;
-
-    let loadImage path =
-      let im = getImage path in
-      {image = Graphics.make_image (im); width = Array.length (Array.get im 0); height = Array.length im}
-    ;;
-
-    let rec setAr ar i c nb =
-      (Array.set ar i c);
-      if nb = 1 then ar else setAr ar (i+1) c (nb-1)
-    ;;
-
-    let resize im pxIN =
-      fst (Array.fold_left (fun acc c -> let i = snd acc in
-                                         let xligne = fst( Array.fold_left (fun acc_ c_ -> let i = snd acc_ in
-                                                                                            (setAr (fst acc_) (i*pxIN) c_ pxIN, i+1)
-                                                                             ) ((Array.make ((Array.length (Array.get im 0))*pxIN) 0), 0) c) in
-                                         (setAr (fst acc) (i*pxIN) xligne pxIN, i+1)
-                             ) ((Array.init ((Array.length im)*pxIN) (fun x -> Array.make ((Array.length (Array.get im 0))*pxIN) 0)), 0) im)
-    ;;
-
-    let loadImagePx path =
-      let im = resize (getImage path) !pxIN in
-      {image = Graphics.make_image im; width = Array.length (Array.get im 0); height = Array.length im}
-    ;;
-
-    let image im x y =
-      Graphics.draw_image im.image (x+ !translateX) (!height-y-im.height- !translateY)
-    ;;
-  end;;
+let screen0 () =
+  let choiceScr = ref 0 in
+  Graph.background (Graph.color 255 255 255);
+  Graph.fill (Graph.color 0 0 0);
+  Graph.text (string_of_int !Graph.frameCount) 20 (Graph.height-40);
+  Graph.image imN 0 90;
+  Graph.image im (int_of_float(((float_of_int(int_of_float(Graph.millis()) mod 6000)/.6000.)*.float_of_int(Graph.width-im.width)))) 0;
+  if Graphics.key_pressed () then
+    (match Graphics.read_key () with
+    | x -> key := x;
+    | _ -> ()
+    )
+  ;
+  Graph.rect (Graph.width-20) (Graph.height-20) (20) (20);
+  Graph.text (String.make 1 !key) 20 (Graph.height-70);
+  if !Graph.mousePressed then
+    if !Graph.mouseX >= (Graph.width-20) && !Graph.mouseX <= Graph.width && !Graph.mouseY >= (Graph.height-20) && !Graph.mouseY <= Graph.height then choiceScr := 1;
+  !choiceScr
+;;*)
