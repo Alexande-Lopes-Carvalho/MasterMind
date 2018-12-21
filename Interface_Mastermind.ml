@@ -15,6 +15,7 @@ open Graphics;;
 
 
 
+
 #directory "+camlimages";;
 #load "graphics.cma";;
 #load "camlimages.cma";;
@@ -28,6 +29,13 @@ Graphics.open_graph " 1000x1000+600";;
 let eot() = close_graph();;
 
 Graphics.set_window_title " Test fenetre 1";;
+
+(* variables globales *)
+let global_x_1 = 350 ;;
+let global_y_1 = 180 ;;
+let global_r =20 ;;
+let global_esp_x = 100 ;; (* espace en x entre les centres de 2 cercles  *)
+let global_esp_y = 80 ;; (* espace en y entre les centres de 2 cercles *)
 
 let gris = rgb 191 191 191;;
 let rouge = rgb 250 0 0;;
@@ -193,11 +201,14 @@ draw_circle (x+3*espx) y r ; ;;
 set_color blue;;
 
 
+
+
+
 let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 |(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx ; draw_table_circle x (y+espy) r endx endy espx espy ;
 |(x,y) when y=dy -> 0;;
 
-draw_table_circle 350 180 20 665 940 100 80;; (* dessine les 10 lignes représentant les 10 essais du joueur *)
+draw_table_circle global_x_1 global_y_1 global_r 665 940 global_esp_x global_esp_y;; (* dessine les 10 lignes représentant les 10 essais du joueur *)
 
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
@@ -216,6 +227,11 @@ print_string " test color";
 
 fst(mouse_pos());;
 snd(mouse_pos());;
+
+
+
+
+
 
 let rec choose_color_v0 () =
  print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
@@ -298,14 +314,17 @@ let pm x c = match x with
 
 
 let rec rempli_un_cercle() = let pos = wait_next_event [Button_down] in
-let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) and r = 20 in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 (* if ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle_v3();; *)
 match (posx,posy) with
-|(a,b) when ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 350 180 r)
-|(a,b) when ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 450 180 r)
-|(a,b) when ( posx > 530 && posx < 570 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 550 180 r)
-|(a,b) when ( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 650 180 r)
-|_-> rempli_cercle_v3();;
+|(a,b) when ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 350 180 20)
+|(a,b) when ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 450 180 20)
+|(a,b) when ( posx > 530 && posx < 570 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 550 180 20)
+|(a,b) when ( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 650 180 20)
+|_ -> rempli_un_cercle() ;;
+
+rempli_un_cercle();;
+
 
 colorer red;;
 
@@ -314,22 +333,96 @@ rempli_un_cercle();;
 rempli_un_cercle();;
 rempli_un_cercle();;
 
+
+
+
+let distance a b x y r = ( ( (x-a)*(x-a) + (y-b)*(y-b) ) <= r*r );; (* renvoi true si un point est sur le cercle ou à l'intérieur *)
+
+let rec rempli_un_cercle_V2() = let pos = wait_next_event [Button_down] in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(a,b) when ( distance global_x_1 global_y_1 posx posy global_r ) -> (fill_circle global_x_1 global_y_1 global_r)
+|(a,b) when ( distance 450 180 posx posy global_r ) -> (fill_circle 450 180 global_r)
+|(a,b) when ( distance 550 180 posx posy global_r ) -> (fill_circle 550 180 global_r)
+|(a,b) when ( distance 650 180 posx posy global_r ) -> (fill_circle 650 180 global_r)
+|_ -> rempli_un_cercle_V2() ;; (* si le clic est en dehors du cercle on rapelle la fonction en attendant un clic dans/sur le cercle *)
+
+
+(* Attention c'est pas minoré en x, on peut cliquer en 300 / 180 ça marche : cliquer sous un cercle *)
+colorer violet;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer cyan;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer yellow;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer green;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+
+
+colorer violet;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer cyan;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer yellow;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer green;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+(********************
+
+let rec rempli_un_cercle_V3() = let pos = wait_next_event [Button_down] in
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(a,b) when ( distance 350 posx 20 )&&( distance 260 posy 20 ) ->  (fill_circle 350 180 20)
+|(a,b) when ( distance 450 posx 20 )&&( distance 260 posy 20 ) ->  (fill_circle 450 180 20)
+|(a,b) when ( distance 550 posx 20 )&&( distance 260 posy 20 ) ->  (fill_circle 550 180 20)
+|(a,b) when ( distance 650 posx 20 )&&( distance 260 posy 20 ) ->  (fill_circle 650 180 20)
+|_ -> rempli_un_cercle() ;;
+
+à tester
+******************)
+
 colorer blue;;
 
+let ask_color() = print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";;
+
 let rec choose_color_v12 i =
- print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";
+if i=4 then () else
  let c = read_key(); and posx = fst(mouse_pos()) and posy = snd(mouse_pos())
   in match (c,i) with
-   |(y,x) when x=4 -> ()
    |('n',x) -> colorer black  ; rempli_un_cercle() ; choose_color_v12 (x+1)
    |('v',x) -> colorer green  ; rempli_un_cercle() ; choose_color_v12 (x+1)
    |('b',x) -> colorer blue   ; rempli_un_cercle() ; choose_color_v12 (x+1)
    |('r',x) -> colorer red    ; rempli_un_cercle() ; choose_color_v12 (x+1)
-   |('j',x) -> colorer yellow ; rempli_un_cercle() ;choose_color_v12 (x+1)
+   |('j',x) -> colorer yellow ; rempli_un_cercle() ; choose_color_v12 (x+1)
    |(_,x) -> choose_color_v12 x; (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
 ;;
 
 choose_color_v12 0;;
+
 
 colorer black;;
 
@@ -337,13 +430,31 @@ let rec rempli_cercle_vrec i = if i = 4 then () else (* si 4 on sort directement
 let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) and r = 20 in
 match (posx,posy,i) with
-|(a,b,j) when (( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 350 180 r) ; rempli_cercle_vrec (i+1)
-|(a,b,j) when (( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 450 180 r) ; rempli_cercle_vrec (i+1)
-|(a,b,j) when (( posx > 530 && posx < 570 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 550 180 r) ; rempli_cercle_vrec (i+1)
-|(a,b,j) when (( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 650 180 r) ; rempli_cercle_vrec (i+1)
+|(a,b,j) when (( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 350 global_y_1 r) ; rempli_cercle_vrec (i+1)
+|(a,b,j) when (( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 450 global_y_1 r) ; rempli_cercle_vrec (i+1)
+|(a,b,j) when (( posx > 530 && posx < 570 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 550 global_y_1 r) ; rempli_cercle_vrec (i+1)
+|(a,b,j) when (( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 650 global_y_1 r) ; rempli_cercle_vrec (i+1)
 |(_,_,j)-> rempli_cercle_vrec j;;
 
 rempli_cercle_vrec 0;;
+
+
+
+
+moveto 100 400;;
+draw_string " - Test menu p ";;
+
+print_string " Que voulez vous faire ? 1/ interface de jeu \n 2 phase de test 9/ Quitter ";;
+let rec menu_principal ()=
+ let c = read_key();
+  in match c with
+   |'a' -> choose_color_v12 0 ;
+   |'z' -> ();
+   |'e' -> eot();
+   |_ -> menu_principal(); (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
+;;
+
+menu_principal();;
 
 
 (*
@@ -362,8 +473,6 @@ rempli_cercle_vrec 0;;
 
   ;;
   *)
-
-colorer green;;
 
 
 (*
@@ -387,9 +496,7 @@ rempli_cercle_ligne();;
 (* if ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle_ligne();; *)
 
 
-
 colorer black;;
-
 
 (*
 let choose_color () =
