@@ -11,6 +11,7 @@ let makeCodeMode = 0;;
 let makeAnswerMode = 1;;
 let gameMode = ref makeCodeMode;; (* 0 : on peut crée notre code
                           1 : on peut faire notre reponse *)
+let codeIA = ref false;;
 let answerIA = ref true;;
 let nombre_pions = 4;; (*pour prevenir le cas Code.nombre_pions <> 4*)
 
@@ -29,7 +30,10 @@ let tokenCodeStepY = 14;;
 
 type image = {image : ocImage; x : float ref; y : float ref};;
 type imageObj = {imageo : ocImage; xo : float ref; yo : float ref; objx : float ref; objy : float ref; k : float};; (* Obj pour objectif *)
-type imageCode = {color : Code.t; listAnswer : imageObj list};;
+type imageAnswer = {id : int; imAns : imageObj};;
+type imageCode = {color : Code.t; listAnswer : imageAnswer list};;
+let answerWellplacedID = 0;;
+let answerMisplacedID = 1;;
 
 let loadImagePx path _x _y = {image = Graph.loadImagePx path; x = ref (_x*.(floatc(!Graph.pxIN))); y = ref (_y*.(floatc(!Graph.pxIN)))};;
 let loadImageObjPx path _x _y _objx _objy _k = {imageo = Graph.loadImagePx path; xo = ref (_x*.(floatc(!Graph.pxIN))); yo = ref (_y*.(floatc(!Graph.pxIN))); objx = ref (_objx*.(floatc(!Graph.pxIN))); objy = ref (_objy*.(floatc(!Graph.pxIN))); k = _k};;
@@ -43,12 +47,18 @@ im.yo := !(im.yo)+. im.k*.(!(im.objy)-. !(im.yo));
 let back = loadImagePx ("./data/Back.im") 0. 0.;;
 let board = loadImagePx ("./data/Board.im") 46. 0.;;
 
+let answerTokenY = 134;;
+let answerTokenStepY = 14;;
+let answerTokenOutputX = 50;;
+let answerTokenOutputEndX = 5;;
+let answerToken = Graph.loadImagePx "./data/TokenAnswer.im";;
+let answerTokenObj = {imageo = answerToken; xo = ref (floatc(!Graph.width)); yo = ref 0. ; objx = ref (floatc(!Graph.width)); objy = ref 0.; k = 0.1};;
 let answerWellplaced = Graph.loadImagePx "./data/TokenWellPlaced.im";;
 let answerMisplaced = Graph.loadImagePx "./data/TokenMisplaced.im";;
 
 let codeArrayList = ref [];;
 let codeArray = Array.make nombre_pions None;;
-(*let codeAnswer = ;;*)
+let codeAnswer = Array.make nombre_pions None;;
 (*codeArrayList := {color = (Code.makeCode "abcd"); listAnswer = [{imageo = answerWellplaced; xo = ref (floatc(50* !Graph.pxIN));  yo = ref (floatc(134* !Graph.pxIN)); objx = ref (floatc(5* !Graph.pxIN)); objy = ref (floatc(134* !Graph.pxIN)); k = 0.1}]}:: !codeArrayList;;
 *)
 let codeSelectedX = 54.;;
@@ -68,6 +78,7 @@ let tokenStartY = 131;;
 let tokenStep = 12;;
 
 let codeSelected = ref 0;;
+let codeSelectedMax = 9;;
 let tokenSelected = ref (-1);;
 
 let drawTokenList () =
@@ -92,25 +103,11 @@ let tokenSelectedHitBox i c =
 ;;
 
 let tokenListSelectedHitBox () =
-  tokenSelected := -1;
-  List.fold_left (fun acc c -> tokenSelectedHitBox acc c; acc+1
-                  ) 0 tokenList;
-;;
-
-let updateGameMode x =
-  gameMode := x;
-  if !gameMode = makeCodeMode then
-    (
-
-      );
-  if !gameMode = makeAnswerMode then
-    (
-      if !answerIA then
-        (
-
-          )
-      else ()
-      );
+  if !gameMode = makeCodeMode then (
+    tokenSelected := -1;
+    List.fold_left (fun acc c -> tokenSelectedHitBox acc c; acc+1
+                    ) 0 tokenList;
+                  ())
 ;;
 
 let updateCodeSelectedImage () =
@@ -122,6 +119,112 @@ let updateCodeSelected () =
   updateCodeSelectedImage()
 ;;
 
+let initMakeCodeMode () =
+  updateCodeSelected ();
+  if !codeSelected <> 0 then
+    (answerTokenObj.objx := floatc(!Graph.width)
+    )
+;;
+
+let initMakeAnswerMode () =
+ answerTokenObj.xo := floatc(!Graph.width);
+ answerTokenObj.yo := floatc ((answerTokenY-answerTokenStepY* !codeSelected)* !Graph.pxIN);
+ answerTokenObj.objx := floatc (!Graph.width-(66)* ! Graph.pxIN);
+ answerTokenObj.objy := floatc ((answerTokenY-answerTokenStepY* !codeSelected)* !Graph.pxIN);
+;;
+
+(*
+let newCode () = (*
+ codeArray*)
+
+;;*)
+
+let addCodeAnswer x =
+  let im = (if x = answerWellplacedID then answerWellplaced else answerMisplaced) in
+  Array.fold_left (fun acc c ->(*print_endline "rec";*) if not (fst (fst(acc))) then
+                                  let i = snd acc in
+                                  match c with
+                                  | None ->  Array.set codeAnswer i (Some({id = x; imAns = {imageo = im;
+                                                                     xo = ref (floatc(answerTokenOutputX* !Graph.pxIN + snd (fst acc)));
+                                                                     yo = ref (floatc ((answerTokenY-answerTokenStepY* !codeSelected + 10)* !Graph.pxIN-(im.height)));
+                                                                     objx = ref (floatc(answerTokenOutputEndX* !Graph.pxIN + snd (fst acc)));
+                                                                     objy = ref (floatc ((answerTokenY-answerTokenStepY* !codeSelected + 10)* !Graph.pxIN-(im.height)));
+                                                                     k = 0.1}})); ((true, 0), i)
+                                  | Some(x) -> ((false, snd (fst acc)+x.imAns.imageo.width+ 1* !Graph.pxIN), i+1)
+                                else acc
+                   ) ((false, 0), 0) codeAnswer; ()
+;;
+
+let rec makeListIAanswer x l =
+  match x with
+  | (0, 0) -> l
+  | (0, v) -> makeListIAanswer (0, v-1) (l@[answerMisplacedID])
+  | (v, k) -> makeListIAanswer (v-1, k) (l@[answerWellplacedID])
+;;
+
+(*)
+let endAnswerIA () =
+  let colorList = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                      match c with
+                                                      | Some(x) -> Array.set codeArray i None; ((fst acc)@[x], i+1)
+                                                      | _ -> print_endline "ERROR AT endAnswer () | codeArray have None"; acc
+                                         ) ([], 0) codeArray) in
+  let answer = match Code.reponse colorList (!secretCode) with
+                | Some(x) -> x
+                | _ -> print_endline "ERROR AT endAnswerIA | Code.reponse return None";(-1, -1)
+  in
+  List.fold_left (fun acc c -> addCodeAnswer c;) () (makeListIAanswer answer []);
+  if fst answer = Code.nombre_pions then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+  else if !codeSelected = codeSelectedMax then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+  else
+  (codeArrayList :=  !codeArrayList@[{color = colorList;
+              listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                              match c with
+                                                              | Some(x) -> Array.set codeAnswer i None; ((fst acc)@[x], i+1)
+                                                              | _ -> acc
+                                                  ) ([], 0) codeAnswer)}];
+  updateGameMode makeCodeMode)
+;;*)
+
+let blankCodeArray () =
+  (Array.fold_left (fun acc c ->let i = acc in Array.set codeArray i None; i+1) 0 codeArray)
+;;
+
+let rec updateGameMode x =
+  gameMode := x;
+  if !gameMode = makeCodeMode then
+    (if !codeIA then ()
+      else initMakeCodeMode ()
+      );
+  if !gameMode = makeAnswerMode then
+    (
+      if !answerIA then
+        (
+          let colorList = Array.fold_left (fun acc c -> match c with
+                                                        | Some(x) -> acc@[x]
+                                                        | _ -> print_endline "ERROR AT endAnswer () | codeArray have None"; acc
+                                                 ) [] codeArray in
+          let answer = match Code.reponse colorList (!secretCode) with
+                        | Some(x) -> x
+                        | _ -> print_endline "ERROR AT endAnswerIA | Code.reponse return None";(-1, -1)
+          in
+          List.fold_left (fun acc c -> addCodeAnswer c;) () (makeListIAanswer answer []);
+          if fst answer = Code.nombre_pions then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+          else if !codeSelected = codeSelectedMax then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+          else
+          (blankCodeArray ();
+           codeArrayList :=  !codeArrayList@[{color = colorList;
+                                              listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                                                              match c with
+                                                                                              | Some(x) -> Array.set codeAnswer i None; ((fst acc)@[x], i+1)
+                                                                                              | _ -> acc
+                                                                                  ) ([], 0) codeAnswer)}];
+          updateGameMode makeCodeMode)
+        )
+      else (initMakeAnswerMode ())
+      );
+;;
+
 let drawCodeArrayList () =
   List.fold_left (fun accy c -> List.fold_left (fun accx c_ -> let color = match c_ with
                                                                           | Code.Color(x) -> x
@@ -129,7 +232,7 @@ let drawCodeArrayList () =
                                                               Graph.image (List.nth tokenList color) (((tokenCodeStartX+accx*tokenCodeStepX+1)* !Graph.pxIN)) (((tokenCodeStartY-accy*tokenCodeStepY+1)* !Graph.pxIN));
                                                               accx+1
                                                ) 0 c.color;
-                                List.fold_left (fun acc_ c_ -> imageObj (c_); acc_
+                                List.fold_left (fun acc_ c_ -> imageObj (c_.imAns); acc_
                                                 ) 0 c.listAnswer;
                                   accy+1
                   ) 0 (!codeArrayList)
@@ -145,6 +248,13 @@ let drawCodeArray () =
                   ) 0 codeArray
 ;;
 
+let drawCodeAnswer () =
+  Array.fold_left (fun acc c -> match c with
+                                  | Some(x) -> imageObj (x.imAns)
+                                  | _ -> ();
+                   ) () codeAnswer
+;;
+
 let tokenCodeHitBox x y =
   let x = (tokenCodeStartX+x*tokenCodeStepX)* !Graph.pxIN in
   let y = (tokenCodeStartY-(!codeSelected)*tokenCodeStepY)* !Graph.pxIN in
@@ -155,6 +265,70 @@ let tokenCodeHitBox x y =
   (mx >= x+(1)* !Graph.pxIN && mx <= x+(tokenCodeStepX-2)* !Graph.pxIN && my >= y+(1)* !Graph.pxIN && my <= y+(tokenCodeStepX-2)* !Graph.pxIN) ||
   (mx >= x+(3)* !Graph.pxIN && mx <= x+(8)* !Graph.pxIN && my >= y && my <= y+(11)* !Graph.pxIN) ||
   (mx >= x && mx <= x+11* !Graph.pxIN && my >= y+(3)* !Graph.pxIN && my <= y+(8)* !Graph.pxIN)
+;;
+
+let endAnswer () =
+  if Array.fold_left (fun acc c -> acc && (match c with
+                                            | Some(x) -> x.id = answerWellplacedID
+                                            | _ -> false)) true codeAnswer then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+  else if !codeSelected = codeSelectedMax then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+  else
+    (codeArrayList :=  !codeArrayList@[{color = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                                                  match c with
+                                                                                  | Some(x) -> Array.set codeArray i None; ((fst acc)@[x], i+1)
+                                                                                  | _ -> print_endline "ERROR AT endAnswer () | codeArray have None"; acc
+                                                                     ) ([], 0) codeArray);
+                listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                                match c with
+                                                                | Some(x) -> Array.set codeAnswer i None; ((fst acc)@[x], i+1)
+                                                                | _ -> acc
+                                                    ) ([], 0) codeAnswer)}];
+    updateGameMode makeCodeMode)
+;;
+
+let supCodeAnswer v =
+  Array.fold_left (fun acc c -> let i = snd acc in
+                                if not (fst (fst acc)) then
+                                  match c with
+                                   | Some(x) -> if x.id = v then ((true, snd (fst acc)), i+1)
+                                                else ((false, snd (fst acc)+x.imAns.imageo.width+ 1* !Graph.pxIN), i+1)
+                                   | _ -> acc
+                                else
+                                  match c with
+                                    | Some(x) -> x.imAns.objx := floatc(answerTokenOutputEndX* !Graph.pxIN + snd (fst acc));
+                                                 Array.set codeAnswer (i-1) c;
+                                                 Array.set codeAnswer (i) None;
+                                                ((true, snd (fst acc)+x.imAns.imageo.width+ 1* !Graph.pxIN), i+1)
+                                    | _ -> Array.set codeAnswer (i-1) c; (fst acc, i+1)
+                   ) ((false, 0), 0) codeAnswer; ()
+;;
+
+let codeAnswerHitBox () =
+  if !gameMode= makeAnswerMode then
+   (
+     let mx = !Graph.mouseX in
+     let my = !Graph.mouseY in
+     if floatc(my) >= !(answerTokenObj.yo) && floatc(my) <= !(answerTokenObj.yo)+.floatc (10* !Graph.pxIN) then
+      (
+         if floatc(mx) >= !(answerTokenObj.xo) && floatc(mx) <= !(answerTokenObj.xo)+.floatc(10* !Graph.pxIN) then
+          (endAnswer ()
+          ); (*Validation Answer*)
+         let addSup = List.fold_left (fun acc c -> let kx = (List.fold_left (fun acc_ c_ -> (*Graph.fill (if c = 0 then Graph.color 255 0 0 else Graph.color 255 255 255);
+                                                                                            Graph.line (roundInt(!(answerTokenObj.xo)+.floatc((13+c*29+c_*(if c = 0 then 19 else 14))* !Graph.pxIN))) (roundInt(!(answerTokenObj.yo))) (roundInt(!(answerTokenObj.xo)+.floatc((13+c*29+c_*(if c = 0 then 19 else 14)+7)* !Graph.pxIN))) (roundInt( !(answerTokenObj.yo)+.floatc (10* !Graph.pxIN)));*)
+                                                                                            if (floatc (mx) >= !(answerTokenObj.xo)+.floatc((13+c*29+c_*(if c = 0 then 19 else 14))* !Graph.pxIN) &&
+                                                                                                floatc(mx) <= !(answerTokenObj.xo)+.floatc((13+c*29+c_*(if c = 0 then 19 else 14)+7)* !Graph.pxIN)) then c_
+                                                                                           else acc_
+                                                                             ) (-1) [0; 1]) in
+                                                   if (kx <> -1) then (c, kx)
+                                                   else acc
+                                      ) (-1, -1) [0; 1] in (* On aurai pu utiliser une boucle mais par contrainte on utilise un fold_left *)
+         if fst addSup <> -1 then (* + *)
+          (
+            if snd addSup = 0 then (addCodeAnswer (fst (addSup)))
+            else (supCodeAnswer (fst (addSup)))
+            );
+      );
+     );
 ;;
 
 let codeSelection () =
@@ -177,10 +351,12 @@ let screenGame () =
   let choiceScr = ref 0 in
   Graph.background (Graph.color 0 0 0);
   image back;
+  drawCodeAnswer ();
   image board;
   drawCodeArrayList ();
   drawCodeArray ();
   imageObj codeSelectedImage;
+  imageObj answerTokenObj;
   drawTokenList ();
   Graph.fill(Graph.color 255 255 255);
   Graph.text (string_of_int !Graph.frameCount) 0 0;
@@ -190,7 +366,7 @@ let screenGame () =
   (*Graph.rect (!Graph.mouseX -20) (!Graph.mouseY-20) (20) (20);*)
   if Graphics.key_pressed () then
     (match Graphics.read_key () with
-    | 'a' -> updateCodeSelected()
+    | 'a' -> updateGameMode 0
     | _ -> ()
     )
   ;
@@ -198,6 +374,7 @@ let screenGame () =
     (
     codeSelection();
     tokenListSelectedHitBox ();
+    codeAnswerHitBox();
     if !Graph.mouseX >= (!Graph.width-20) && !Graph.mouseX <= !Graph.width && !Graph.mouseY >= (0) && !Graph.mouseY <= 20 then (choiceScr := -1);
     )
   ;
