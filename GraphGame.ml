@@ -1,18 +1,23 @@
 #use "GraphLib.ml";;
 #use "Code.ml";;
+#use "IA.ml";;
 
 (* OBLIGATOIRE :
 Code.nombre_pions = 4
 Code.couleurs_possibles = 6 ou moins
 *)
-let secretCode = ref (Code.makeCode "abcd");;
+let secretCode = ref (Code.makeCode "feba");;
 
 let makeCodeMode = 0;;
 let makeAnswerMode = 1;;
 let gameMode = ref makeCodeMode;; (* 0 : on peut crée notre code
                           1 : on peut faire notre reponse *)
-let codeIA = ref false;;
-let answerIA = ref true;;
+let listEssaiPropose = ref [];;
+let listEssaiPossible = ref Code.tous;;
+
+let modeIA = ref 1;;
+let codeIA = ref true;;
+let answerIA = ref false;;
 let nombre_pions = 4;; (*pour prevenir le cas Code.nombre_pions <> 4*)
 
 let round f = floor (f +. 0.5);;
@@ -77,7 +82,7 @@ let tokenStartX = 113;;
 let tokenStartY = 131;;
 let tokenStep = 12;;
 
-let codeSelected = ref 0;;
+let codeSelected = ref (-1);;
 let codeSelectedMax = 9;;
 let tokenSelected = ref (-1);;
 
@@ -120,7 +125,6 @@ let updateCodeSelected () =
 ;;
 
 let initMakeCodeMode () =
-  updateCodeSelected ();
   if !codeSelected <> 0 then
     (answerTokenObj.objx := floatc(!Graph.width)
     )
@@ -193,7 +197,13 @@ let blankCodeArray () =
 let rec updateGameMode x =
   gameMode := x;
   if !gameMode = makeCodeMode then
-    (if !codeIA then ()
+    ( updateCodeSelected ();
+      if !codeIA then
+      (
+        let output = IA.choix !modeIA !listEssaiPropose !listEssaiPossible in
+        (List.fold_left (fun acc c -> Array.set codeArray acc (Some(c)); acc+1) 0 output);
+        updateGameMode makeAnswerMode
+      )
       else initMakeCodeMode ()
       );
   if !gameMode = makeAnswerMode then
@@ -212,7 +222,12 @@ let rec updateGameMode x =
           if fst answer = Code.nombre_pions then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
           else if !codeSelected = codeSelectedMax then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
           else
-          (blankCodeArray ();
+          (if !codeIA then
+            (
+            listEssaiPossible := IA.filtre (!modeIA) (colorList, Some(answer)) !listEssaiPossible;
+            listEssaiPropose := !listEssaiPropose@[colorList]
+            );
+           blankCodeArray ();
            codeArrayList :=  !codeArrayList@[{color = colorList;
                                               listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
                                                                                               match c with
@@ -268,20 +283,28 @@ let tokenCodeHitBox x y =
 ;;
 
 let endAnswer () =
-  if Array.fold_left (fun acc c -> acc && (match c with
-                                            | Some(x) -> x.id = answerWellplacedID
-                                            | _ -> false)) true codeAnswer then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
+  let answer = (Array.fold_left (fun acc c -> match c with
+                                              | Some(x) -> if x.id = answerWellplacedID then (fst acc +1, snd acc) else (fst acc, snd acc+1)
+                                              | _ -> acc
+                                 ) (0, 0) codeAnswer) in
+  if (fst answer) = Code.nombre_pions then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
   else if !codeSelected = codeSelectedMax then ((* updateGameMode *)) (*MESSAGE DE FIN ENDROUND*)
   else
-    (codeArrayList :=  !codeArrayList@[{color = fst (Array.fold_left (fun acc c -> let i = snd acc in
-                                                                                  match c with
-                                                                                  | Some(x) -> Array.set codeArray i None; ((fst acc)@[x], i+1)
-                                                                                  | _ -> print_endline "ERROR AT endAnswer () | codeArray have None"; acc
-                                                                     ) ([], 0) codeArray);
-                listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
-                                                                match c with
-                                                                | Some(x) -> Array.set codeAnswer i None; ((fst acc)@[x], i+1)
-                                                                | _ -> acc
+    (let colorList = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                         match c with
+                                                         | Some(x) -> Array.set codeArray i None; ((fst acc)@[x], i+1)
+                                                         | _ -> print_endline "ERROR AT endAnswer () | codeArray have None"; acc
+                                            ) ([], 0) codeArray) in
+      if !codeIA then
+      (
+      listEssaiPossible := IA.filtre (!modeIA) (colorList, Some(answer)) !listEssaiPossible;
+      listEssaiPropose := !listEssaiPropose@[colorList]
+      );
+     codeArrayList :=  !codeArrayList@[{color = colorList;
+                                                listAnswer = fst (Array.fold_left (fun acc c -> let i = snd acc in
+                                                                                                match c with
+                                                                                                | Some(x) -> Array.set codeAnswer i None; ((fst acc)@[x], i+1)
+                                                                                                | _ -> acc
                                                     ) ([], 0) codeAnswer)}];
     updateGameMode makeCodeMode)
 ;;
@@ -380,6 +403,8 @@ let screenGame () =
   ;
   !choiceScr
 ;;
+
+updateGameMode makeCodeMode;;
 
 let screenList = [screenGame];;
 
