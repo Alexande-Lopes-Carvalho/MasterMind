@@ -55,6 +55,8 @@ module Graph :
 
     val text : string -> int -> int -> unit
 
+    val textList : string list -> int -> int -> unit
+
     val wait : float -> unit
 
     val getImage : string -> Graphics.color array array
@@ -62,6 +64,8 @@ module Graph :
     val loadImage : string -> ocImage
 
     val loadImagePx : string -> ocImage
+
+    val loadImagePxSet : string -> int -> ocImage
 
     val image : ocImage -> int -> int -> unit
 
@@ -150,7 +154,7 @@ module Graph :
     let fill co = Graphics.set_color (co);;
 
     let rect x y w h =
-      Graphics.fill_rect (x+ !translateX) (!height-1 - y - h - !translateY) w h
+      Graphics.fill_rect (x+ !translateX) (!height - y - h - !translateY) (w-1) (h-1)
     ;;
 
     let background co =
@@ -176,6 +180,14 @@ module Graph :
     let text txt x y =
       Graphics.moveto (x+ !translateX) ((!height)-1 -y-(snd(Graphics.text_size ""))- !translateY);
       Graphics.draw_string txt;
+    ;;
+
+    let rec textList txt x y =
+      match txt with
+      | t::l ->  Graphics.moveto (x+ !translateX) ((!height)-1 -y-(snd(Graphics.text_size ""))- !translateY);
+                 Graphics.draw_string t;
+                 textList l x (y+(snd(Graphics.text_size "")));
+      | _ -> ()
     ;;
 
     let input_line_option ch =
@@ -263,6 +275,11 @@ module Graph :
 
     let loadImagePx path =
       let im = resize (getImage path) !pxIN in
+      {image = Graphics.make_image im; width = Array.length (Array.get im 0); height = Array.length im}
+    ;;
+
+    let loadImagePxSet path pxIN =
+      let im = resize (getImage path) pxIN in
       {image = Graphics.make_image im; width = Array.length (Array.get im 0); height = Array.length im}
     ;;
 
