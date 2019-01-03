@@ -2,6 +2,7 @@
 #use "Code.ml";;
 #use "IA.ml";;
 
+let initStartBool = ref true;;
 (* OBLIGATOIRE :
 Code.nombre_pions = 4
 Code.couleurs_possibles = 6 ou moins
@@ -15,6 +16,9 @@ Code.couleurs_possibles = 6 ou moins
   typePlayerMaker = -1  : Human
   typePlayerMaker = 0  : IA assist
 *)
+
+let maxvalue a b = if a>b then a else b;;
+let minvalue a b = if a>b then b else a;;
 
 let gameLeft = ref 4;;
 
@@ -55,6 +59,9 @@ let round f = floor (f +. 0.5);;
 let roundInt f = int_of_float (floor (f +. 0.5));;
 let floatc x = float_of_int x;;
 let intc x = int_of_float x;;
+
+Random.init (roundInt(Unix.gettimeofday()));;
+print_endline ((string_of_int(roundInt(Unix.gettimeofday()))) ^ " INIT RANDOM");;
 
 let pxIN = 4;;
 let txtPxIN = 4;;
@@ -195,9 +202,9 @@ let drawCodeArray ar xco yco =
 
 let tokenCodeHitBox x y =
   let mx = !Graph.mouseX in
-  let my = !Graph.mouseY in Graph.line (x+(1)* !Graph.pxIN) (y+(1)* !Graph.pxIN) (x+(tokenCodeStepX-2)* !Graph.pxIN) (y+(tokenCodeStepX-2)* !Graph.pxIN);
+  let my = !Graph.mouseY in (*Graph.line (x+(1)* !Graph.pxIN) (y+(1)* !Graph.pxIN) (x+(tokenCodeStepX-2)* !Graph.pxIN) (y+(tokenCodeStepX-2)* !Graph.pxIN);
   Graph.line (x+(3)* !Graph.pxIN ) (y) (x+(8)* !Graph.pxIN) (y+(11)* !Graph.pxIN);
-  Graph.line (x) (y+(3)* !Graph.pxIN) (x+11* !Graph.pxIN) (y+(8)* !Graph.pxIN);
+  Graph.line (x) (y+(3)* !Graph.pxIN) (x+11* !Graph.pxIN) (y+(8)* !Graph.pxIN);*)
   (mx >= x+(1)* !Graph.pxIN && mx <= x+(tokenCodeStepX-2)* !Graph.pxIN && my >= y+(1)* !Graph.pxIN && my <= y+(tokenCodeStepX-2)* !Graph.pxIN) ||
   (mx >= x+(3)* !Graph.pxIN && mx <= x+(8)* !Graph.pxIN && my >= y && my <= y+(11)* !Graph.pxIN) ||
   (mx >= x && mx <= x+11* !Graph.pxIN && my >= y+(3)* !Graph.pxIN && my <= y+(8)* !Graph.pxIN)
@@ -223,15 +230,26 @@ let initMakeEndMode () =
   secretCodeBoard.objy := 0.;
   answerTokenObj.objx := floatc(!Graph.width);
   let wonID = if !codeBreakerWon || !badAnswer then !codeBreaker else !codeMaker in
-  let oldscore = !((Array.get player (wonID)).score) in print_endline (string_of_int oldscore);
+  let oldscore = !((Array.get player (wonID)).score) in (*print_endline (string_of_int oldscore);*)
   Array.set player (wonID) ({name = (Array.get player (wonID)).name; typePlayerBreaker = (Array.get player (wonID)).typePlayerBreaker; typePlayerMaker = (Array.get player (wonID)).typePlayerMaker; score = ref (1+ oldscore)});
+  let score0 = (!((Array.get player (0)).score)) in let score1 = (!((Array.get player (1)).score)) in
   messageEndImage.txt := (!((Array.get player (wonID)).name) ^ " has won") ::
-                         (if !badAnswer then (!((Array.get player ((wonID+1) mod 2)).name) ^ " hasn't answered correctly") else "") ::
+                         (if !badAnswer then (!((Array.get player ((wonID+1) mod 2)).name) ^ " mistake were made") else "") ::
                          ("") ::
                          ("") ::
                          (!((Array.get player (0)).name) ^ " : " ^ string_of_int(!((Array.get player (0)).score))) ::
                          (!((Array.get player (1)).name) ^ " : " ^ string_of_int(!((Array.get player (1)).score))) ::
-                         ("") ::
+                         (if !gameLeft=0 then
+                           (if (score0 = score1) then
+                                ("- Equality !")
+                            else (
+                      "- "^  (if (score0 > score1) then
+                                (!((Array.get player (0)).name))
+                              else
+                                (!((Array.get player (1)).name)))
+                                 ^ " has won the Game"))
+                          else "")
+                           ::
                          ("Press key to continue ...")::[];
 ;;
 
@@ -296,7 +314,7 @@ let rec updateGameMode x =
   gameMode := x;
   if !gameMode = makeSecretCodeMode then
    (
-     if getTypePlayerMaker (!codeMaker) >= 0 then
+     if getTypePlayerBreaker (!codeMaker) >= 0 then
       (
         secretCode := List.nth Code.tous (Random.int (List.length Code.tous));
         putSecretCode ();
@@ -539,16 +557,20 @@ let screenGame () =
   drawTokenList ();
   Graph.fill(Graph.color 255 255 255);
   imageTxtMessageObj messageEndImage;
-  Graph.text (string_of_int !Graph.frameCount) 0 0;
+  if !gameMode <> makeEndMode then
+    (
+      Graph.text ((!((Array.get player ((if (!gameMode = makeCodeMode) then !codeBreaker else !codeMaker))).name))^" turn") (0) (0);
+    );
+  (*Graph.text (string_of_int !Graph.frameCount) 0 0;
   Graph.text (string_of_int !codeSelected) 0 40;
   Graph.text (string_of_int(!Graph.mouseX) ^ " " ^ string_of_int(!Graph.mouseY)) 0 80;
-  Graph.text (string_of_int(fst (Graphics.mouse_pos ())) ^ " " ^ string_of_int(snd (Graphics.mouse_pos ()))) 0 120;
+  Graph.text (string_of_int(fst (Graphics.mouse_pos ())) ^ " " ^ string_of_int(snd (Graphics.mouse_pos ()))) 0 120;*)
   (*Graph.rect (!Graph.mouseX -20) (!Graph.mouseY-20) (20) (20);*)
   if Graphics.key_pressed () then
     (match Graphics.read_key () with
       | _ -> if !gameMode = makeEndMode then
               if !gameLeft <> 0 then (initNewGame ())
-              else (choiceScr := -1)
+              else (initStartBool := true; choiceScr := 0)
     )
   ;
   if !Graph.mousePressed then
@@ -564,17 +586,386 @@ let screenGame () =
 
 (* Partie screenStart _______________________*)
 
+let startTxtPxIN = 4;;
+let maxLengthName = 9;;
+let defaultName = "Player";;
+
+let nbRoundSelected = ref 2;;
+let playerSelectedText = ref (-1);;
+let playerSelectedMode = ref (-1);;
+
+let colorOnIcon = Graph.color 52 163 243;;
+let colorOnIconSel = Graph.color 243 27 27;;
+
+let isOnImageObj im =
+  !Graph.mouseX >= roundInt(!(im.xo)) &&
+  !Graph.mouseX <= roundInt(!(im.xo))+im.imageo.width &&
+  !Graph.mouseY >= roundInt(!(im.yo)) &&
+  !Graph.mouseY <= roundInt(!(im.yo))+im.imageo.height
+;;
+
+let imageStartPlayIcon = {imageo = Graph.loadImagePxSet "./data/StartPlayIcon.im" startTxtPxIN; xo = ref 0.; yo = ref 0.; objx = ref 0.; objy = ref 0.; k = 0.1};;
+let imageStartBackIcon = {imageo = Graph.loadImagePxSet "./data/StartBackIcon.im" startTxtPxIN; xo = ref 0.; yo = ref 0.; objx = ref 0.; objy = ref 0.; k = 0.1};;
+let imageStartRoundIm = {imageo = Graph.loadImagePxSet "./data/StartRoundSelection.im" startTxtPxIN; xo = ref 0.; yo = ref 0.; objx = ref 0.; objy = ref 0.; k = 0.1};;
+
+let startRoundHitBox x y =
+  !Graph.mouseX >= x && !Graph.mouseX <= x+imageStartRoundIm.imageo.width &&
+  !Graph.mouseY >= y && !Graph.mouseY <= y+startTxtPxIN*8
+;;
+
+let imageStartRoundHitBox () =
+  if startRoundHitBox (roundInt !(imageStartRoundIm.xo)) (roundInt !(imageStartRoundIm.yo)) then
+   (nbRoundSelected := minvalue (!nbRoundSelected+2) 98)
+  else if startRoundHitBox (roundInt !(imageStartRoundIm.xo)) (roundInt !(imageStartRoundIm.yo)+17*startTxtPxIN) then
+   (nbRoundSelected := maxvalue (!nbRoundSelected-2) 2);
+;;
+
+let imageStartRound () =
+  imageObj imageStartRoundIm;
+  let txt = (string_of_int(!nbRoundSelected)) in
+  let dim = Graphics.text_size txt in
+  Graph.fill (Graph.color 255 255 255);
+  Graph.text txt ((roundInt !(imageStartRoundIm.xo)) + imageStartRoundIm.imageo.width/2-(fst dim)/2) ((roundInt !(imageStartRoundIm.yo)) + imageStartRoundIm.imageo.height/2-(snd dim)/2);
+;;
+
+type imagePlayerIcon = {playerData : player; imgPlayerIcon : image}
+
+let imagePlayerModeIconIm = Graph.loadImagePxSet "./data/StartPlayerModeIcon.im" startTxtPxIN;;
+let playerModeList = "Human"::"Human a"::"IA easy"::"IA hard"::[];;
+
+let imagePlayerIconIm = Graph.loadImagePxSet "./data/StartPlayerIcon.im" startTxtPxIN;;
+let arrayPlayerIcon = Array.init 2 (fun c -> {
+  playerData = {name = ref ("Player "^string_of_int c); typePlayerBreaker = ref (-1); typePlayerMaker = ref (-1); score = ref 0
+    };
+  imgPlayerIcon =
+    {image = imagePlayerIconIm;
+     x = ref (floatc ((!(Graph.width))/2 - imagePlayerIconIm.width/2));
+     y = ref (floatc ((!(Graph.height))/2 + (if c = 0 then -8*startTxtPxIN-imagePlayerIconIm.height/2 else 8*startTxtPxIN)))}});;
+
+
+let isOnImagePlayerModeIcon x y =
+  !Graph.mouseX >= x &&
+  !Graph.mouseX <= x+42*startTxtPxIN &&
+  !Graph.mouseY >= y &&
+  !Graph.mouseY <= y+imagePlayerModeIconIm.height
+;;
+
+let identifyPlayerMode c =
+  let a = !(c.typePlayerBreaker) in
+  let b = !(c.typePlayerMaker) in
+  if a = -1 && b = -1 then 0
+  else if a = -1 && b = 0 then 1
+  else if a = 0 && b = 0 then 2
+  else if a = 1 && b = 0 then 3
+  else (-1)
+;;
+
+let imagePlayerModeIcon xc yc c b s =
+  Graph.image imagePlayerModeIconIm xc yc;
+  if (b || s) then
+    (
+      Graph.fill (if b then colorOnIcon else colorOnIconSel);
+      Graph.rect (xc+31*startTxtPxIN) (yc+1*startTxtPxIN) (1*startTxtPxIN) (7*startTxtPxIN);
+      );
+  Graph.fill (Graph.color 255 255 255);
+  let dim = Graphics.text_size c in
+  Graph.text c (xc+imagePlayerModeIconIm.width/2-(fst dim)/2) (yc+imagePlayerModeIconIm.height/2-(snd dim)/2);
+;;
+
+let drawImageListPlayerModeIcon () =
+  if !playerSelectedMode <> -1 then
+    (
+    let mode = identifyPlayerMode ((Array.get arrayPlayerIcon (!playerSelectedMode)).playerData) in
+    let y = ((roundInt(!((Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.y))) + (Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.image.height) in
+    let xc = (roundInt(!((Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.x))+ (Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.image.width)-imagePlayerModeIconIm.width in
+    (List.fold_left (fun acc c -> let i = snd acc in
+                                  let h = fst acc in
+                                  let yc = (y+i*(imagePlayerModeIconIm.height-startTxtPxIN)) in
+                                  let b = isOnImagePlayerModeIcon xc yc in
+                                  imagePlayerModeIcon xc yc c (b && (not h)) (mode = i);
+                                  (h || b, i+1)
+                     ) (false, 0) playerModeList); ()
+    );
+;;
+
+let setPlayer i a b =
+  (Array.get arrayPlayerIcon i).playerData.typePlayerBreaker := a;
+  (Array.get arrayPlayerIcon i).playerData.typePlayerMaker := b;
+;;
+
+let isOnTextImageIcon im =
+  !Graph.mouseX >= roundInt(!(im.imgPlayerIcon.x)) &&
+  !Graph.mouseX <= roundInt(!(im.imgPlayerIcon.x))+42*startTxtPxIN &&
+  !Graph.mouseY >= roundInt(!(im.imgPlayerIcon.y)) &&
+  !Graph.mouseY <= roundInt(!(im.imgPlayerIcon.y))+im.imgPlayerIcon.image.height
+;;
+
+let isOnModeImageIcon im =
+  !Graph.mouseX > roundInt(!(im.imgPlayerIcon.x))+42*startTxtPxIN &&
+  !Graph.mouseX <= roundInt(!(im.imgPlayerIcon.x))+im.imgPlayerIcon.image.width &&
+  !Graph.mouseY >= roundInt(!(im.imgPlayerIcon.y)) &&
+  !Graph.mouseY <= roundInt(!(im.imgPlayerIcon.y))+im.imgPlayerIcon.image.height
+;;
+
+let imagePlayerIcon im =
+  image (im.imgPlayerIcon);
+  if ((!playerSelectedMode) = -1 && isOnTextImageIcon im) then
+    (Graph.fill (colorOnIcon);
+     Graph.rect (roundInt(!(im.imgPlayerIcon.x))+1*startTxtPxIN) (roundInt(!(im.imgPlayerIcon.y))+1*startTxtPxIN) (1*startTxtPxIN) (startTxtPxIN*7);
+     Graph.rect (roundInt(!(im.imgPlayerIcon.x))+40*startTxtPxIN) (roundInt(!(im.imgPlayerIcon.y))+1*startTxtPxIN) (1*startTxtPxIN) (startTxtPxIN*7);
+      );
+  Graph.fill (Graph.color 255 255 255);
+  let dim = Graphics.text_size (!(im.playerData.name)) in
+  Graph.text (!(im.playerData.name))
+  (roundInt(!(im.imgPlayerIcon.x))+21*startTxtPxIN-((fst (dim))/2))
+  (roundInt(!(im.imgPlayerIcon.y))+im.imgPlayerIcon.image.height/2-((snd (dim))/2));
+;;
+
+type imageIcon = {text : string ref; imgIcon : image};;
+
+let iconIDPlay = 0;;
+let iconIDQuit = 1;;
+let imageIconSelection = Graph.loadImagePxSet "./data/StartIconSelection.im" startTxtPxIN;;
+let iconList =
+{text = ref "play"; imgIcon =
+  {image = imageIconSelection; x = ref 0.; y = ref 0.}}::
+{text = ref "quit"; imgIcon =
+  {image = imageIconSelection; x = ref 0.; y = ref 0.}}
+::[];;
+
+let isOnImageIcon im =
+  !Graph.mouseX >= roundInt(!(im.imgIcon.x)) &&
+  !Graph.mouseX <= roundInt(!(im.imgIcon.x))+im.imgIcon.image.width &&
+  !Graph.mouseY >= roundInt(!(im.imgIcon.y)) &&
+  !Graph.mouseY <= roundInt(!(im.imgIcon.y))+im.imgIcon.image.height
+;;
+
+let imageIcon im =
+  image (im.imgIcon);
+  if (isOnImageIcon im) then
+    (Graph.fill (colorOnIcon);
+     Graph.rect (roundInt(!(im.imgIcon.x))+startTxtPxIN*1) (roundInt(!(im.imgIcon.y))+startTxtPxIN*1) (startTxtPxIN*1) (startTxtPxIN*7);
+     Graph.rect (roundInt(!(im.imgIcon.x))+startTxtPxIN*40) (roundInt(!(im.imgIcon.y))+startTxtPxIN*1) (startTxtPxIN*1) (startTxtPxIN*7)
+      );
+  Graph.fill (Graph.color 255 255 255);
+  let dim = Graphics.text_size (!(im.text)) in
+  Graph.text (!(im.text))
+  (roundInt(!(im.imgIcon.x))+im.imgIcon.image.width/2-((fst (dim))/2))
+  (roundInt(!(im.imgIcon.y))+im.imgIcon.image.height/2-((snd (dim))/2));
+;;
+
+let startScreenMenu = 0;;
+let startScreenPlay = 1;;
+let startScreenMode = ref 0;;
+let startBack = loadImagePx "./data/StartBack.im" 0. 0.;;
+let startBackLayer = loadImagePx "./data/StartBackLayer.im" 0. 0.;;
+let logo = {imageo = Graph.loadImagePxSet "./data/Logo.im" 3; xo = ref 0.; yo = ref 0.; objx = ref 0.; objy = ref 0.; k = 0.1};;
+
+let updateStartMode x =
+  startScreenMode := x;
+  if !startScreenMode = startScreenMenu then
+   (
+      imageStartPlayIcon.objx := floatc (171*startTxtPxIN);
+      imageStartBackIcon.objx := floatc (29*startTxtPxIN - imageStartBackIcon.imageo.width);
+      imageStartRoundIm.objx := floatc (171*startTxtPxIN);
+      logo.objy := floatc (14* !Graph.pxIN)
+    )
+  else if !startScreenMode = startScreenPlay then
+    (
+      imageStartPlayIcon.objx := floatc (153*startTxtPxIN);
+      imageStartBackIcon.objx := floatc (38*startTxtPxIN);
+      imageStartRoundIm.objx := floatc (153*startTxtPxIN);
+      logo.objy := floatc (-logo.imageo.height)
+    );
+;;
+
+let initStartScreen () =
+  logo.xo := floatc (!Graph.width/2-logo.imageo.width/2);
+  logo.objx := !(logo.xo);
+  logo.yo := floatc (-logo.imageo.height);
+  (List.fold_left (fun acc c -> c.imgIcon.x := floatc (!Graph.width/2-c.imgIcon.image.width/2); c.imgIcon.y := floatc (!Graph.height/2+acc*(c.imgIcon.image.height+startTxtPxIN*7)); acc+1) 0 iconList);
+  updateStartMode startScreenMenu;
+  nbRoundSelected := 2;
+  playerSelectedText := -1;
+  playerSelectedMode := -1;
+  imageStartPlayIcon.xo := floatc (171*startTxtPxIN);
+  imageStartPlayIcon.yo := floatc (138*startTxtPxIN);
+  imageStartPlayIcon.objx := !(imageStartPlayIcon.xo);
+  imageStartPlayIcon.objy := !(imageStartPlayIcon.yo);
+  imageStartBackIcon.xo := floatc (29*startTxtPxIN - imageStartBackIcon.imageo.width);
+  imageStartBackIcon.yo := floatc (138*startTxtPxIN);
+  imageStartBackIcon.objx := !(imageStartBackIcon.xo);
+  imageStartBackIcon.objy := !(imageStartBackIcon.yo);
+  imageStartRoundIm.xo := floatc (171*startTxtPxIN);
+  imageStartRoundIm.yo := floatc (106*startTxtPxIN);
+  imageStartRoundIm.objx := !(imageStartPlayIcon.xo);
+  imageStartRoundIm.objy := !(imageStartRoundIm.yo);
+  (Array.fold_left (fun acc c -> Array.set arrayPlayerIcon acc
+    ({playerData = {name = ref (defaultName^" "^string_of_int (acc+1));
+                    typePlayerBreaker = ref (-1);
+                    typePlayerMaker = ref (-1);
+                    score = ref 0
+                    };
+      imgPlayerIcon = {image = imagePlayerIconIm;
+                       x = ref (floatc ((!(Graph.width))/2 - imagePlayerIconIm.width/2));
+                       y = ref (floatc ((!(Graph.height))/2 + (if acc = 0 then -8*startTxtPxIN-imagePlayerIconIm.height/2 else 8*startTxtPxIN)))}
+                       });
+                      acc+1) 0 arrayPlayerIcon);
+;;
+
+let drawImageIcon () =
+ (List.fold_left (fun acc c -> imageIcon c; acc) () iconList)
+;;
+
+let drawImagePlayerIcon () =
+  (Array.fold_left (fun acc c -> imagePlayerIcon (c);
+                                 ()
+                    ) () arrayPlayerIcon);
+;;
+
+let imageIconHitBox () =
+  fst (List.fold_left (fun acc c -> if isOnImageIcon c then (snd acc, snd acc +1)
+                                    else (fst acc, snd acc +1)
+                 ) (-1,0) iconList)
+;;
+
+let nameKeyPressed c =
+  if !playerSelectedText <> -1 then (
+    match (int_of_char c) with
+    | 8 -> (Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name := String.sub (!((Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name)) 0
+     (maxvalue ((String.length (!((Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name))) -1) 0);
+    | 10 -> playerSelectedText := -1;
+    | x when ((x >= 32) && (x <= 126)) && (String.length (!((Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name))) < maxLengthName ->
+      (Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name := (!((Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name)) ^ (String.make 1 c);
+    | _ -> ()
+    );
+;;
+
+let nameHitboxImagePlayerIcon () =
+  if !playerSelectedText <> -1 && String.length (!((Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name)) = 0  then
+    (
+      (Array.get arrayPlayerIcon (!playerSelectedText)).playerData.name :=  (defaultName^" "^string_of_int ((!playerSelectedText)+1))
+      );
+  playerSelectedText := if !playerSelectedMode <> -1 then -1 else (
+  fst (Array.fold_left (fun acc c -> if (isOnTextImageIcon c) then
+                                      (
+                                        c.playerData.name := "";
+                                        (snd acc, snd acc+1)
+                                      )
+                                     else (fst acc, snd acc+1)
+                        ) (-1, 0) arrayPlayerIcon));
+;;
+
+let modeHitboxImagePlayerIcon () =
+if !playerSelectedMode <> -1 then
+  (
+    let y = ((roundInt(!((Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.y))) + (Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.image.height) in
+    let xc = (roundInt(!((Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.x))+ (Array.get arrayPlayerIcon (!playerSelectedMode)).imgPlayerIcon.image.width)-imagePlayerModeIconIm.width in
+    let output = fst
+    (List.fold_left (fun acc c -> let i = snd acc in
+                                 let index = fst acc in
+                                 let yc = (y+i*(imagePlayerModeIconIm.height-startTxtPxIN)) in
+                                 if (index = (-1)) && (isOnImagePlayerModeIcon xc yc) then
+                                   (i, i+1)
+                                 else
+                                   (index, i+1)
+                    ) (-1, 0) playerModeList) in
+    match output with
+    | 0 -> setPlayer (!playerSelectedMode) (-1) (-1);      playerSelectedMode := -2;
+    | 1 -> setPlayer (!playerSelectedMode) (-1) 0;      playerSelectedMode := -2;
+    | 2 -> setPlayer (!playerSelectedMode) 0 0;      playerSelectedMode := -2;
+    | 3 -> setPlayer (!playerSelectedMode) 1 0;      playerSelectedMode := -2;
+    | _ -> ()
+  );
+  if !playerSelectedMode = -2 then (playerSelectedMode := -1)
+  else
+    (
+  playerSelectedMode :=
+  fst (Array.fold_left (fun acc c -> if (isOnModeImageIcon c) then
+                                      (
+                                        (snd acc, snd acc+1)
+                                      )
+                                     else (fst acc, snd acc+1)
+                        ) (-1, 0) arrayPlayerIcon);
+                        )
+;;
+
+let launchGame () =
+  gameLeft := !nbRoundSelected;
+  codeBreaker := Random.int 2;
+  gameLeft := !nbRoundSelected;
+  Array.fold_left (fun acc c -> Array.set player acc (c.playerData);
+                                acc+1
+                   ) 0 arrayPlayerIcon;
+  initNewGame ();
+;;
+
 let screenStart () =
   let choiceScr = ref 0 in
-
+  if !initStartBool then
+    ( initStartBool := false;
+      initStartScreen (); ()
+    );
+  image startBack;
+  imageObj imageStartPlayIcon;
+  imageObj imageStartBackIcon;
+  imageStartRound ();
+  image startBackLayer;
+  imageObj logo;
+  if !startScreenMode = startScreenMenu then
+    (
+      drawImageIcon();
+    );
+  if !startScreenMode = startScreenPlay then
+    (
+       drawImagePlayerIcon ();
+       drawImageListPlayerModeIcon ();
+    );
+  Graph.fill (Graph.color 255 255 255);
+  (*Graph.line (!Graph.mouseX) 0 (!Graph.mouseX) (!Graph.height);
+  Graph.line (0) (!Graph.mouseY) (!Graph.width) (!Graph.mouseY);*)
+  (*Graph.text (string_of_int !Graph.frameCount) 0 0;
+  Graph.text (string_of_int !codeSelected) 0 40;
+  Graph.text (string_of_int(!Graph.mouseX) ^ " " ^ string_of_int(!Graph.mouseY)) 0 80;
+  Graph.text (string_of_int(!playerSelectedText)) 0 120;
+  Graph.text (string_of_int(!playerSelectedMode)) 0 160;
+  Graph.text (string_of_int(!((Array.get arrayPlayerIcon 0).playerData.typePlayerBreaker)) ^ " " ^ string_of_int(!((Array.get arrayPlayerIcon 0).playerData.typePlayerMaker))) 0 200;
+  Graph.text (string_of_int(!((Array.get arrayPlayerIcon 1).playerData.typePlayerBreaker)) ^ " " ^ string_of_int(!((Array.get arrayPlayerIcon 1).playerData.typePlayerMaker))) 0 220;
+  *)if Graphics.key_pressed () then
+    (
+    let c = Graphics.read_key () in
+    if !startScreenMode = startScreenPlay then
+      (
+      nameKeyPressed c
+      );
+    );
+  if !Graph.mousePressed then
+    (
+      if !startScreenMode = startScreenMenu then
+        (
+          let i = imageIconHitBox () in
+          if i = iconIDPlay then (updateStartMode startScreenPlay);
+          if i = iconIDQuit then ( (choiceScr := -1) );
+          )
+      else if !startScreenMode = startScreenPlay then
+        (
+          if (!playerSelectedMode) = -1 && (!playerSelectedText) = -1 then
+            (
+              imageStartRoundHitBox ();
+              if isOnImageObj imageStartPlayIcon then (launchGame (); choiceScr := 1);
+              if isOnImageObj imageStartBackIcon then (updateStartMode startScreenMenu);
+            );
+          nameHitboxImagePlayerIcon ();
+          modeHitboxImagePlayerIcon ();
+          );
+    if !Graph.mouseX >= (!Graph.width-20) && !Graph.mouseX <= !Graph.width && !Graph.mouseY >= (0) && !Graph.mouseY <= 20 then (choiceScr := -1);
+    );
   !choiceScr
 ;;
 
-initNewGame ();;
-
 let screenList = [screenStart; screenGame];;
 
-Graph.draw screenList 1;;
+Graph.draw screenList 0;;
 
 (*
 Screen Format :
