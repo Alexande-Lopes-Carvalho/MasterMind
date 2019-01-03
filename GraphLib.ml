@@ -108,8 +108,8 @@ module Graph :
 
     let beginDraw () =
       let mouseCoord = Graphics.mouse_pos () in
-      mouseX := fst (mouseCoord);
-      mouseY := !height-1 - snd (mouseCoord);
+      mouseX := fst (mouseCoord)-1;
+      mouseY := !height-1 - snd (mouseCoord)-2;
       frameCount := !frameCount+1;
       mouseProc ();
       startFrame := millis()
