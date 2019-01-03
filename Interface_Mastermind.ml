@@ -347,9 +347,18 @@ match (posx,posy) with
 |(a,b) when ( distance 650 180 posx posy global_r ) -> (fill_circle 650 180 global_r)
 |_ -> rempli_un_cercle_V2() ;; (* si le clic est en dehors du cercle on rapelle la fonction en attendant un clic dans/sur le cercle *)
 
+(*
+let global_x_1 = 350 ;;
+let global_y_1 = 180 ;;
+let global_r =20 ;;
+let global_esp_x = 100 ;; (* espace en x entre les centres de 2 cercles  *)
+let global_esp_y = 80 ;; (* espace en y entre les centres de 2 cercles *)
+*)
 
 (* Attention c'est pas minoré en x, on peut cliquer en 300 / 180 ça marche : cliquer sous un cercle *)
-colorer violet;;
+
+
+(* colorer violet;;
 
 rempli_un_cercle_V2();;
 rempli_un_cercle_V2();;
@@ -390,6 +399,7 @@ colorer green;;
 
 rempli_un_cercle_V2();;
 rempli_un_cercle_V2();;
+*)
 (********************
 
 let rec rempli_un_cercle_V3() = let pos = wait_next_event [Button_down] in
@@ -403,8 +413,45 @@ match (posx,posy) with
 
 à tester
 ******************)
+let rec rempli_un_cercle_L2() = let pos = wait_next_event [Button_down] in (* on monte y de l'espace global entre les centres car on passe à la ligne au dessus *)
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(a,b) when ( distance (global_x_1)                  (global_y_1 + global_esp_y) posx posy global_r ) -> (fill_circle global_x_1                    (global_y_1 + global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + global_esp_y) global_r)
+|_ -> rempli_un_cercle_L2() ;;
 
 colorer blue;;
+rempli_un_cercle_L2();;
+colorer white;;
+rempli_un_cercle_L2();;
+colorer red;;
+rempli_un_cercle_L2();;
+colorer violet;;
+rempli_un_cercle_L2();;
+
+
+let rec rempli_un_cercle_L3() = let pos = wait_next_event [Button_down] in (* on monte y de l'espace global entre les centres car on passe à la ligne au dessus *)
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(a,b) when ( distance (global_x_1)                  (global_y_1 + 2*global_esp_y) posx posy global_r ) -> (fill_circle global_x_1                    (global_y_1 + 2*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + 2*global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + 2*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + 2*global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + 2*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + 2*global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + 2*global_esp_y) global_r)
+|_ -> rempli_un_cercle_L3() ;;
+
+
+colorer blue;;
+rempli_un_cercle_L3();;
+colorer white;;
+rempli_un_cercle_L3();;
+colorer red;;
+rempli_un_cercle_L3();;
+colorer violet;;
+rempli_un_cercle_L3();;
+
+
 
 let ask_color() = print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";;
 
