@@ -20,7 +20,7 @@ open Graphics;;
 #load "graphics.cma";;
 #load "camlimages.cma";;
 
-Graphics.open_graph " 1000x1000+600";;
+Graphics.open_graph " 1000x1000+70";;
 (*                       l x h
  Graphi
  cs.open_graph "";; <=> taille prédef
@@ -37,6 +37,7 @@ let global_r =20 ;;
 let global_esp_x = 100 ;; (* espace en x entre les centres de 2 cercles  *)
 let global_esp_y = 80 ;; (* espace en y entre les centres de 2 cercles *)
 
+
 let gris = rgb 191 191 191;;
 let rouge = rgb 250 0 0;;
 let brown = rgb 222 184 135;;
@@ -48,7 +49,6 @@ set_color rouge;
 draw_rect 10 10 65 30;;
 moveto 20 20;;
 draw_string "Quitter";;
-
 
 
 set_color gris;
@@ -64,7 +64,6 @@ draw_rect 8 8 980 980;;
 set_line_width 2;;
 set_color brown;
 draw_rect 40 45 920 940;;
-
 
 
 moveto 400 400;;
@@ -142,7 +141,6 @@ let brown = rgb 222 184 135;;
 
 set_line_width 1;;
 
-
 set_color rouge;
 draw_rect 10 10 65 30;;
 moveto 20 20;;
@@ -201,9 +199,6 @@ draw_circle (x+3*espx) y r ; ;;
 set_color blue;;
 
 
-
-
-
 let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 |(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx ; draw_table_circle x (y+espy) r endx endy espx espy ;
 |(x,y) when y=dy -> 0;;
@@ -213,6 +208,7 @@ draw_table_circle global_x_1 global_y_1 global_r 665 940 global_esp_x global_esp
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in (fill_circle posx posy 20);;
 
+(*
 
 let get_char () = read_key();;
 get_char();;
@@ -221,16 +217,14 @@ set_color blue;;
 clic_draw_circle();;
 clic_draw_circle();;
 
+*)
+
 let colorer x = set_color x;;
 
 print_string " test color";
 
 fst(mouse_pos());;
 snd(mouse_pos());;
-
-
-
-
 
 
 let rec choose_color_v0 () =
@@ -243,11 +237,7 @@ let rec choose_color_v0 () =
    |'r' -> colorer red ; fill_circle posx posy 20
    |'j' -> colorer yellow ; fill_circle posx posy 20
    |_ -> choose_color_v0(); (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
-
 ;;
-
-choose_color_v0();;
-
 
 
 let rec choose_color_v1 i =
@@ -261,11 +251,10 @@ let rec choose_color_v1 i =
    |('r',x) -> colorer red ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
    |('j',x) -> colorer yellow ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
    |(_,x) -> choose_color_v1 x; (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
-
 ;;
 
 
-choose_color_v1 0;;
+(* choose_color_v1 0;; *)
 
 let rec fill_grille i =
 
@@ -282,21 +271,14 @@ let rec fill_grille i =
 
 ;;
 
-colorer violet;;
 
 let rec fill_grille_aux () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) then (fill_circle 350 180 20) else fill_grille_aux();;
 
-fill_grille_aux();;
-
-colorer green;;
 
 let rec rempli_cercle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle();;
-
-rempli_cercle();;
-
 
 
 let rec membre_liste x l = match l with
@@ -312,7 +294,6 @@ let pm x c = match x with
 |_ -> false ;;  (* matcher chaque elt avec pm x pm y avec List.nth 1,2,3,4,4,5,6,7,8,9,10 *)
 
 
-
 let rec rempli_un_cercle() = let pos = wait_next_event [Button_down] in
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 (* if ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle_v3();; *)
@@ -322,16 +303,6 @@ match (posx,posy) with
 |(a,b) when ( posx > 530 && posx < 570 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 550 180 20)
 |(a,b) when ( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 ) ->  (fill_circle 650 180 20)
 |_ -> rempli_un_cercle() ;;
-
-rempli_un_cercle();;
-
-
-colorer red;;
-
-rempli_un_cercle();;
-rempli_un_cercle();;
-rempli_un_cercle();;
-rempli_un_cercle();;
 
 
 
@@ -358,48 +329,6 @@ let global_esp_y = 80 ;; (* espace en y entre les centres de 2 cercles *)
 (* Attention c'est pas minoré en x, on peut cliquer en 300 / 180 ça marche : cliquer sous un cercle *)
 
 
-(* colorer violet;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer cyan;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer yellow;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer green;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-
-
-colorer violet;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer cyan;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer yellow;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-
-colorer green;;
-
-rempli_un_cercle_V2();;
-rempli_un_cercle_V2();;
-*)
 (********************
 
 let rec rempli_un_cercle_V3() = let pos = wait_next_event [Button_down] in
@@ -422,15 +351,6 @@ match (posx,posy) with
 |(a,b) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + global_esp_y) posx posy global_r ) -> (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + global_esp_y) global_r)
 |_ -> rempli_un_cercle_L2() ;;
 
-colorer blue;;
-rempli_un_cercle_L2();;
-colorer white;;
-rempli_un_cercle_L2();;
-colorer red;;
-rempli_un_cercle_L2();;
-colorer violet;;
-rempli_un_cercle_L2();;
-
 
 let rec rempli_un_cercle_L3() = let pos = wait_next_event [Button_down] in (* on monte y de l'espace global entre les centres car on passe à la ligne au dessus *)
 let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
@@ -442,14 +362,84 @@ match (posx,posy) with
 |_ -> rempli_un_cercle_L3() ;;
 
 
-colorer blue;;
-rempli_un_cercle_L3();;
-colorer white;;
-rempli_un_cercle_L3();;
-colorer red;;
-rempli_un_cercle_L3();;
-colorer violet;;
-rempli_un_cercle_L3();;
+
+
+(*
+let rec clique_ligne l = if l>9 then print_string " erreur le plateau de jeu n'est pas plus grand " else
+let pos = wait_next_event [Button_down] in (* ligne 0 à 9 car si l=0 on a juste global_y_1 qui corrspond à la 1ère ligne *)
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy) with
+|(a,b) when ( distance (global_x_1)                  (global_y_1 + l*global_esp_y) posx posy global_r ) -> color_ligne() ; (fill_circle global_x_1                    (global_y_1 + l*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) posx posy global_r ) -> color_ligne()  ; (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) posx posy global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) global_r)
+|(a,b) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) posx posy global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) global_r)
+|_ -> clique_ligne l ;;
+
+clique_ligne 0 ;;
+clique_ligne 1 ;;
+clique_ligne 2 ;;
+clique_ligne 3 ;;
+clique_ligne 4 ;;
+clique_ligne 5 ;;
+clique_ligne 6 ;;
+clique_ligne 7 ;;
+clique_ligne 8 ;;
+clique_ligne 9 ;; *)
+
+let rec color_ligne() =
+ (*print_string " Choisissez la couleur : r rouge v vert b bleu n noir j jaune ";*)
+ let c = read_key(); (* ; and posx = fst(mouse_pos()) and posy = snd(mouse_pos())*)
+  in match c with
+   |('n') -> colorer black ;
+   |('v') -> colorer green ;
+   |('b') -> colorer blue ;
+   |('r') -> colorer red ;
+   |('j') -> colorer yellow ;
+   |_ -> color_ligne();
+;;
+
+
+let rec code_secret l i = if l>9 then print_string " erreur le plateau de jeu n'est pas plus grand_1" else
+let pos = wait_next_event [Button_down] in (* ligne 0 à 9 car si l=0 on a juste global_y_1 qui corrspond à la 1ère ligne *)
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy,i) with
+|(a,b,j) when j=5 -> ();
+|(a,b,j) when ( distance (global_x_1)                  ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle global_x_1                    (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 1*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 2*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 3*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|_ -> code_secret l i;;
+
+(*code_secret 0 1;;*)
+
+let clic() =
+let att = wait_next_event [Button_down] in
+let abs = att.mouse_x and ord = att.mouse_y in abs,ord;;
+
+
+let rec clique_ligne_2 l i = if l>9 then print_string " erreur le plateau de jeu n'est pas plus grand_2 " else
+let pos = wait_next_event [Button_down] in (* ligne 0 à 9 car si l=0 on a juste global_y_1 qui corrspond à la 1ère ligne *)
+let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
+match (posx,posy,i) with
+(* |(a,b,j) when j=0 -> clique_ligne_2 l (i+1) *)
+|(a,b,j) when j=4 -> ();
+|(a,b,j) when ( distance (global_x_1)                  (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle global_x_1                    (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
+|_ -> clique_ligne_2 l i (*failwith (" error 404")*);;
+
+
+clique_ligne_2 0 0;;
+clique_ligne_2 1 0;;
+clique_ligne_2 2 0;;
+clique_ligne_2 3 0;;
+clique_ligne_2 4 0;;
+clique_ligne_2 5 0;;
+clique_ligne_2 6 0;;
+clique_ligne_2 7 0;;
+clique_ligne_2 8 0;;
+clique_ligne_2 9 0;;
 
 
 
@@ -468,10 +458,6 @@ if i=4 then () else
    |(_,x) -> choose_color_v12 x; (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
 ;;
 
-choose_color_v12 0;;
-
-
-colorer black;;
 
 let rec rempli_cercle_vrec i = if i = 4 then () else (* si 4 on sort directement, si on rentre dans le match il y aura un 5 clics à faire pour placer 4pièces*)
 let pos = wait_next_event [Button_down] in
@@ -483,25 +469,118 @@ match (posx,posy,i) with
 |(a,b,j) when (( posx > 630 && posx < 670 )&&( posy > 160 && posy < 200 )) && j<4 ->  (fill_circle 650 global_y_1 r) ; rempli_cercle_vrec (i+1)
 |(_,_,j)-> rempli_cercle_vrec j;;
 
-rempli_cercle_vrec 0;;
-
-
 
 
 moveto 100 400;;
 draw_string " - Test menu p ";;
 
 print_string " Que voulez vous faire ? 1/ interface de jeu \n 2 phase de test 9/ Quitter ";;
-let rec menu_principal ()=
+let rec menu_principal()=
  let c = read_key();
   in match c with
+   |'l' -> match read_key(); with
+      |'1' -> rempli_un_cercle_V2();
+      |'2' -> rempli_un_cercle_L3();
+      |'3' -> rempli_un_cercle_L3();
+      |'4' -> menu_principal();
    |'a' -> choose_color_v12 0 ;
    |'z' -> ();
    |'e' -> eot();
-   |_ -> menu_principal(); (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
+   |_ -> menu_principal(); (* !! marche pas !!*)
 ;;
 
+
 menu_principal();;
+
+choose_color_v0();;
+
+colorer violet;;
+
+fill_grille_aux();;
+
+colorer green;;
+
+rempli_cercle();;
+
+rempli_un_cercle();;
+
+colorer red;;
+
+rempli_un_cercle();;
+rempli_un_cercle();;
+rempli_un_cercle();;
+rempli_un_cercle();;
+
+
+colorer blue;;
+rempli_un_cercle_L2();;
+colorer white;;
+rempli_un_cercle_L2();;
+colorer red;;
+rempli_un_cercle_L2();;
+colorer violet;;
+rempli_un_cercle_L2();;
+
+colorer blue;;
+rempli_un_cercle_L3();;
+colorer white;;
+rempli_un_cercle_L3();;
+colorer red;;
+rempli_un_cercle_L3();;
+colorer violet;;
+rempli_un_cercle_L3();;
+
+
+choose_color_v12 0;;
+
+
+colorer black;;
+
+
+rempli_cercle_vrec 0;;
+
+
+
+(* colorer violet;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer cyan;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer yellow;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer green;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer violet;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer cyan;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer yellow;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+
+colorer green;;
+
+rempli_un_cercle_V2();;
+rempli_un_cercle_V2();;
+*)
 
 
 (*
