@@ -39,57 +39,26 @@ let brown = rgb 222 184 135;;
 let violet = rgb 255 0 255;;
 set_line_width 1;;
 
+Graphics.set_font "-*-fixed-medium-r-semicondensed--25-*-*-*-*-*-iso8859-1";
 
-set_color rouge;
-draw_rect 10 10 65 30;;
-moveto 20 20;;
-draw_string "Quitter";;
-
-
-set_color gris;
-draw_rect 900 10 65 30;;
-moveto 910 20;;
-set_color black;
-draw_string "Options";;
-
-
-set_color gris;
-draw_rect 8 8 980 980;;
-
-set_line_width 2;;
-set_color brown;
-draw_rect 40 45 920 940;;
-
- (*set_line_width 1;;  largeur lignes
-
-lineto 100 160;; (*trace un trait de la position actuelle vers position en paramètre*)
-
-draw_circle 400 450 50;;
-fill_circle 400 450 30;;
-
-draw_ellipse 450 250 25 30  ;;(* centre x y rx ry *)
-fill_ellipse 450 250 10 15;;
-
-draw_arc 160 160 80 110 50 360;;
-draw_arc x y rx ry a b;;
-
-  size_x();;
-  size_y();;
-
-current_point();; (* position actuelle *)
-moveto 50 50;; *)
-(* plot a b;;  - dessine 1 pt
-lineto a b;;   - dessine 1 ligne
-current_point();;
-
-fst(mouse_pos());;
-snd(mouse_pos());;
-
-*)
-
-
+set_color blue;
 moveto 150 80;;
 draw_string "Combinaison";;
+
+moveto  70 400;;
+draw_string "b - bleu ";;
+moveto  70 370;;
+draw_string "c - cyan ";;
+moveto  70 340;;
+draw_string "j - jaune  ";;
+moveto  70 310;;
+draw_string "n - noir  ";;
+moveto  70 280;;
+draw_string "p - violet ";;
+moveto  70 250;;
+draw_string "r - rouge ";;
+moveto  70 220;;
+draw_string "v - vert ";;
 
 set_color black;;
 let gris = rgb 191 191 191;;
@@ -99,13 +68,13 @@ let brown = rgb 222 184 135;;
 set_line_width 1;;
 
 set_color rouge;
-draw_rect 10 10 65 30;;
-moveto 20 20;;
+draw_rect 10 10 100 30;;
+moveto 20 15;;
 draw_string "Quitter";;
 
 set_color gris;
-draw_rect 900 10 65 30;;
-moveto 910 20;;
+draw_rect 885 10 100 30;;
+moveto 895 15;;
 draw_string "Options";;
 
 set_color gris;
@@ -117,11 +86,10 @@ draw_rect 40 45 920 940;;
 
 
 let quit_game () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
-if ( posx > 10 && posx < 75 )&&( posy > 10 && posy < 40 ) then close_graph() else print_string "NF";;
-(* pos quit 10 10 65 30 *)
+if ( posx > 10 && posx < 110 )&&( posy > 10 && posy < 40 ) then close_graph() else print_string "NF";;
 
 let option_clic () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
-if ( posx > 900 && posx < 965 )&&( posy > 10 && posy < 40 ) then  print_string "Option_clicked" else print_string "NF2";;
+if ( posx > 885 && posx < 985 )&&( posy > 10 && posy < 40 ) then  print_string "Option_clicked" else print_string "NF2";;
 
 set_color black;;
 fill_circle 350 90 20;;
@@ -143,6 +111,7 @@ let rec draw_table_circle dx dy r endx endy espx espy = match (dx,dy) with
 |(x,y) when x<endx && y<endy -> draw_4_circle dx dy r espx ; draw_table_circle x (y+espy) r endx endy espx espy ;
 |(x,y) when y=dy -> 0;;
 
+set_color black;;
 draw_table_circle global_x_1 global_y_1 global_r 665 940 global_esp_x global_esp_y;; (* dessine les 10 lignes représentant les 10 essais du joueur *)
 
 let clic_draw_circle() = let pos = wait_next_event [Button_down] in
@@ -155,7 +124,6 @@ let clic() =
    let clicV() =
      let att = wait_next_event [Button_down] in
       let abs = att.mouse_x and ord = att.mouse_y in Printf.printf "abs = %d ; ord = %d\n" abs ord;;
-
 
 let colorer x = set_color x;;
 
@@ -181,7 +149,7 @@ let rec choose_color_v1 i =
    |('b',x) -> colorer blue ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
    |('r',x) -> colorer red ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
    |('j',x) -> colorer yellow ; fill_circle posx posy 20 ; choose_color_v1 (x+1)
-   |(_,x) -> choose_color_v1 x; (* si choix incorrect on rapelle la fonction jusqu'a avoir une entrée correspondante aux choix possibles*)
+   |(_,x) -> choose_color_v1 x;
 ;;
 
 (* choose_color_v1 0;; *)
@@ -203,8 +171,11 @@ let rec fill_grille i =
 let rec fill_grille_aux () = let posx = fst(mouse_pos()) and posy = snd(mouse_pos()) in
 if ( posx > 330 && posx < 370 )&&( posy > 160 && posy < 200 ) then (fill_circle 350 180 20) else fill_grille_aux();;
 
-let rec rempli_cercle() =
-let (posx,posy) = (clicA()) in
+let clicA() =
+  let att = wait_next_event [Button_down] in
+   let abs = att.mouse_x and ord = att.mouse_y in (abs,ord);;
+
+let rec rempli_cercle() = let (posx,posy) = (clicA()) in
 if ( posx > 430 && posx < 470 )&&( posy > 160 && posy < 200 ) then (fill_circle 450 180 20) else rempli_cercle();;
 
 
@@ -219,7 +190,6 @@ match (posx,posy) with
 
 
 let distance a b x y r = ( ( (x-a)*(x-a) + (y-b)*(y-b) ) <= r*r );; (* renvoi true si un point est sur le cercle ou à l'intérieur *)
-
 
 let rec rempli_un_cercle_L2() = (* on monte y de l'espace global entre les centres car on passe à la ligne au dessus *)
 let (posx,posy) = (clicA()) in
@@ -263,8 +233,8 @@ clique_ligne 7 ;;
 clique_ligne 8 ;;
 clique_ligne 9 ;; *)
 
-let rec color_ligne() =
-(*  print_string " Choisissez la couleur : c cyan ; b bleu ; j jaune ; n noir ; r rouge ; v vert  ";  *)
+let rec color_ligne_0() =
+
  let c = read_key();
   in match c with
    |('b') -> colorer blue ;
@@ -274,50 +244,91 @@ let rec color_ligne() =
    |('p') -> colorer violet ;
    |('r') -> colorer red ;
    |('v') -> colorer green ;
-   |_ -> color_ligne();
+   |_ -> color_ligne_0();
 ;;
 
+let tab_vide= [| " " ; " " ; " " ; " " |] ;;
+let code    = [| " " ; " " ; " " ; " " |] ;;
+let essai_0 = [| " " ; " " ; " " ; " " |] ;;
+let essai_1 = [| " " ; " " ; " " ; " " |] ;;
+let essai_2 = [| " " ; " " ; " " ; " " |] ;;
+let essai_3 = [| " " ; " " ; " " ; " " |] ;;
+let essai_4 = [| " " ; " " ; " " ; " " |] ;;
+let essai_5 = [| " " ; " " ; " " ; " " |] ;;
+let essai_6 = [| " " ; " " ; " " ; " " |] ;;
+let essai_7 = [| " " ; " " ; " " ; " " |] ;;
+let essai_8 = [| " " ; " " ; " " ; " " |] ;;
+let essai_9 = [| " " ; " " ; " " ; " " |] ;;
+
+let rec color_ligne tab p =
+ let c = read_key(); and essai = [| " " ; " " ; " " ; " " |]
+  in match c with
+   |('b') -> colorer blue ;   tab.(p) <- "b"
+   |('c') -> colorer cyan ;   tab.(p) <- "c"
+   |('j') -> colorer yellow ; tab.(p) <- "j"
+   |('n') -> colorer black ;  tab.(p) <- "n"
+   |('p') -> colorer violet ; tab.(p) <- "p"
+   |('r') -> colorer red ;    tab.(p) <- "r"
+   |('v') -> colorer green ;  tab.(p) <- "v"
+   |_ -> color_ligne_try p;
+;;
+
+(* let rec comparer x y tab_vide i = if i = 4 then tab_vide else (* i = 0 à 3 ; on aura on tableau de t et f selon le cas où le joueur a choisi la bonne couleur ou non *)
+match (x.(i)) with
+|a when a = y.(i) -> tab_vide.(i) = "t" ; comparer x y tab_vide (i+1)
+|a when a <> y.(i) -> tab_vide.(i) =  "f" ; comparer x y tab_vide (i+1)
+|_-> failwith ("erreur comparer")
+;;
+*)
+
+let rec comparer x y tab i = if i = 4 then tab else (* i = 0 à 3 ; on aura on tableau de t et f selon le cas où le joueur a choisi la bonne couleur ou non *)
+match (x.(i)) with
+|a when a = y.(i) -> tab.(i) = "t" ; comparer x y tab (i+1)
+|a when a <> y.(i) -> tab.(i) =  "f" ; comparer x y tab (i+1)
+|_-> failwith ("erreur comparer")
+;; (* renvoi vide au lieu de combi t / f *)
 
 let rec code_secret l i =
 if i>=4 then () else
 if l>9 then print_string " erreur le plateau de jeu n'est pas plus grand_1" else
 let (posx,posy) = (clicA()) in (* ligne 0 à 9 car si l=0 on a juste global_y_1 qui corrspond à la 1ère ligne *)
 match (posx,posy,i) with
-|(a,b,j) when ( distance (global_x_1)                  ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle global_x_1                    (90) global_r) ; code_secret l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 1*global_esp_x) (90) global_r) ; code_secret l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 2*global_esp_x) (90) global_r) ; code_secret l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne() ; (fill_circle (global_x_1 + 3*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1)                  ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne code 0 ; (fill_circle global_x_1                    (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne code 1 ; (fill_circle (global_x_1 + 1*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne code 2 ; (fill_circle (global_x_1 + 2*global_esp_x) (90) global_r) ; code_secret l (j+1)
+|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) ((global_y_1-90) + l*global_esp_y) a b global_r ) -> color_ligne code 3 ; (fill_circle (global_x_1 + 3*global_esp_x) (90) global_r) ; code_secret l (j+1)
 |_ -> code_secret l i;;
 
 code_secret 0 0;;
+code ;;
 
-let clicA() =
-  let att = wait_next_event [Button_down] in
-   let abs = att.mouse_x and ord = att.mouse_y in (abs,ord);;
-
-let rec clique_ligne_2 l i =
+let rec clique_ligne_2 l i tabl =
 if i>=4 then () else
  if l>9 then print_string " erreur le plateau de jeu n'est pas plus grand_2 " else
 let (posx,posy) = (clicA()) in (* associe posx et posy aux 2 int de clicA *)
 match (posx,posy,i) with
-|(a,b,j) when ( distance (global_x_1)                  (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle global_x_1                    (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
-|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne() ; (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1)
-|_ -> clique_ligne_2 l i (*failwith (" error 404")*);;
+|(a,b,j) when ( distance (global_x_1)                  (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne tabl 0 ; (fill_circle global_x_1                    (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1) tabl
+|(a,b,j) when ( distance (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne tabl 1 ; (fill_circle (global_x_1 + 1*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1) tabl
+|(a,b,j) when ( distance (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne tabl 2 ; (fill_circle (global_x_1 + 2*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1) tabl
+|(a,b,j) when ( distance (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) a b global_r )=true -> color_ligne tabl 3 ; (fill_circle (global_x_1 + 3*global_esp_x) (global_y_1 + l*global_esp_y) global_r) ; clique_ligne_2 l (j+1) tabl
+|_ -> clique_ligne_2 l i tabl;;                                                        (* Les cases du tableau sont remplies selon le cercle ou clique le joueur, car il ne remplira pas forcément les cases dans l'ordre *)
 
 
-clique_ligne_2 0 0;; (* les 10 essais du joueur *)
-clique_ligne_2 1 0;;
-clique_ligne_2 2 0;;
-clique_ligne_2 3 0;;
-clique_ligne_2 4 0;;
-clique_ligne_2 5 0;;
-clique_ligne_2 6 0;;
-clique_ligne_2 7 0;;
-clique_ligne_2 8 0;;
-clique_ligne_2 9 0;;
+clique_ligne_2 0 0 essai_0;; (* les 10 essais du joueur *)
+essai_0 ;;
 
+comparer code essai_0 tab_vide 0;;
+
+clique_ligne_2 1 0 essai_1;;
+essai_1 ;;
+clique_ligne_2 2 0 essai_2;;
+clique_ligne_2 3 0 essai_3;;
+clique_ligne_2 4 0 essai_4;;
+clique_ligne_2 5 0 essai_5;;
+clique_ligne_2 6 0 essai_6;;
+clique_ligne_2 7 0 essai_7;;
+clique_ligne_2 8 0 essai_8;;
+clique_ligne_2 9 0 essai_9;;
 
 
 moveto 100 400;;
